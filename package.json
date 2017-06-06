@@ -1,0 +1,24 @@
+{
+  "name": "edelweiss",
+  "version": "0.0.0",
+  "description": "<p align=\"center\">\r     <img src=\"https://i.gyazo.com/a747b2173e90fcd6ae27d9329a63506a.png\" width=\"770\"/>\r </p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://g-harel@github.com/g-harel/edelweiss.git"
+  },
+  "author": "g-harel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/g-harel/edelweiss/issues"
+  },
+  "homepage": "https://github.com/g-harel/edelweiss#readme",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "lodash.merge": "^4.6.0",
+  }
+}
