@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+  users:
+    build: ./src/users/
+    environment:
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=users

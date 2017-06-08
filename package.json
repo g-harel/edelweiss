@@ -4,6 +4,7 @@
   "description": "<p align=\"center\">\r     <img src=\"https://i.gyazo.com/a747b2173e90fcd6ae27d9329a63506a.png\" width=\"770\"/>\r </p>",
   "main": "index.js",
   "scripts": {
+    "start": " docker-compose up -d",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
