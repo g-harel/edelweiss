@@ -19,7 +19,9 @@
   "homepage": "https://github.com/g-harel/edelweiss#readme",
   "dependencies": {
     "body-parser": "^1.17.2",
+    "diip": "0.0.1",
+    "ence": "^0.0.4",
     "express": "^4.15.3",
-    "lodash.merge": "^4.6.0",
+    "lodash.merge": "^4.6.0"
   }
 }
