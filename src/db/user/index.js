@@ -39,7 +39,7 @@ const user = () => {
     };
 
     const auth = (callback, domain, email, password) => {
-        callback(null, !!store.find((user) => {
+        callback(null, store.find((user) => {
             return user.domain === domain && user.email === email && user.password === password;
         }));
     };

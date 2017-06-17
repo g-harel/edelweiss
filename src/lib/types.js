@@ -12,9 +12,17 @@ const domainConfig = {
     name: 'string',
     roles: [{
         name: 'string',
-        priority: 'number',
+        permission: 'number',
     }],
-    data: null,
+    data: null, // domainConfigLevel
 };
 
-module.exports = {user, domainConfig};
+const domainConfigLevel = {
+    permissions: {
+        read: 'number',
+        write: 'number',
+    },
+    children: null, //  object OR array
+};
+
+module.exports = {user, domainConfig, domainConfigLevel};
