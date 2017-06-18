@@ -1,47 +1,43 @@
 'use strict';
 
-const {assert, checkType} = require('../../lib');
-
 const user = () => {
     let store = [];
 
     const add = (callback, user) => {
-        user = checkType('user', {id: Math.random()*1000000000000000000}, user);
-        assert(!store.find((storedUser) => storedUser.id === user.id), 'user id must be unique');
-        assert(!store.find((storedUser) => (storedUser.email === user.email && storedUser.domain === user.domain)), 'user email must be unique for the same domain');
         store.push(user);
-        callback(null, true);
-        console.log('> added user\n', store);
+        callback(null, user);
     };
 
     const edit = (callback, id, changes) => {
-        store = store
-            .map((user) => {
-                if (user.id === id) {
-                    user = checkType('user', user, changes);
-                }
-                return user;
-            });
-        callback(null, true);
-        console.log('> edited user\n', store);
+        let editedUser = null;
+        store = store.map((user) => {
+            if (user.id === id) {
+                user = Object.assign({}, user, changes);
+                editedUser = user;
+            }
+            return user;
+        });
+        callback(editedUser?null:'could not edit user', editedUser||null);
     };
 
     const remove = (id) => {
+        let removedUser = null;
         store.find((user, index) => {
             if (user.id === id) {
                 store.splice(index, 1);
+                removedUser = user;
                 return true;
             }
             return false;
         });
-        callback(null, true);
-        console.log('> removed user\n', store);
+        callback(removedUser?null:'could not remove user', removedUser||null);
     };
 
     const auth = (callback, domain, email, password) => {
-        callback(null, store.find((user) => {
+        let authUser = store.find((user) => {
             return user.domain === domain && user.email === email && user.password === password;
-        }));
+        });
+        callback(authUser?null:'could not authenticate user', authUser||null);
     };
 
     return {add, edit, remove, auth};

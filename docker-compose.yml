@@ -2,7 +2,11 @@ version: '2'
 
 services:
   users:
-    build: ./src/users/
+    build: ./src/db/user/
     environment:
       - POSTGRES_PASSWORD=password123
       - POSTGRES_DB=users
+  domainConfig:
+    build: ./src/db/domain/config
+  domainData:
+    build: ./src/db/domain/data

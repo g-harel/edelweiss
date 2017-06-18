@@ -19,6 +19,7 @@
   "homepage": "https://github.com/g-harel/edelweiss#readme",
   "dependencies": {
     "body-parser": "^1.17.2",
+    "deep-assign": "^2.0.0",
     "diip": "0.0.1",
     "ence": "^0.0.4",
     "express": "^4.15.3",
