@@ -4,7 +4,7 @@ const config = () => {
     const store = {};
 
     const add = (callback, domainConfig) => {
-        store[domain.name] = domainConfig;
+        store[domainConfig.name] = domainConfig;
         callback(null, domainConfig);
     };
 
@@ -29,4 +29,4 @@ const config = () => {
     return {add, find, remove};
 };
 
-module.exports = config;
+export = config;

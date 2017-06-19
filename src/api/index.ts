@@ -1,7 +1,7 @@
 'use strict';
 
-const express = require('express');
-const bodyParser = require('body-parser');
+import express = require('express');
+import bodyParser = require('body-parser');
 
 const db = {
     user: require('../db/user')(),
