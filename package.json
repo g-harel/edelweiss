@@ -1,25 +1,17 @@
 {
   "name": "edelweiss",
   "version": "0.0.0",
-  "description": "edelweiss",
-  "main": "index.js",
   "scripts": {
-    "start": " docker-compose up -d"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://g-harel@github.com/g-harel/edelweiss.git"
+    "start": "docker-compose up -d",
+    "build": "tsc",
+    "test": "run-s test:*",
+    "test:lint": "tslint -c tslint.json 'src/**/*.ts' || true"
   },
   "author": "g-harel",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/g-harel/edelweiss/issues"
-  },
-  "homepage": "https://github.com/g-harel/edelweiss#readme",
-  "dependencies": {
-    "body-parser": "^1.17.2",
-    "ence": "^0.0.4",
-    "express": "^4.15.3",
-    "lodash.merge": "^4.6.0"
+  "devDependencies": {
+    "npm-run-all": "^4.0.2",
+    "tslint": "^5.5.0",
+    "typescript": "^2.4.2"
   }
 }
