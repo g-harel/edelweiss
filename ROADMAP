@@ -3,15 +3,14 @@
     create
     delete
     read
-    change content (json/text)
   user database
     add
     remove
     edit
-    auth
   api
     domain endpoints
     user endpoints
+    auth
   interface
     /home
     /:domain/login

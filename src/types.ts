@@ -1,11 +1,11 @@
 interface IDomain {
-  uid: number;
+  id: number;
   name: string;
   data: string;
 }
 
 interface IUser {
-  uid: number;
+  id: number;
   email: string;
   password: string;
   domain: string;
