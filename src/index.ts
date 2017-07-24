@@ -1,45 +1,39 @@
+import * as bcrypt from 'bcrypt';
 import * as express from 'express';
-import { Client } from 'pg';
+import * as Sequelize from 'sequelize';
 
-const app = express();
+import IDomain, * as domains from './tables/domains';
+import IUser, * as users from './tables/users';
 
-const client = new Client({
-  database: 'edelweiss',
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-});
+const sequelize = new Sequelize('postgres://postgres@localhost:5432/edelweiss');
 
-const tableExists = async (name: string): Promise<boolean> => {
-  const res = await client.query(`
-    SELECT 1
-    FROM pg_tables
-    WHERE tablename = '${name}'
-  `);
-  return Boolean(res.rows && res.rows.length);
+const Domains = sequelize
+  .define(domains.name, domains.attributes, domains.options);
+
+const Users = sequelize
+  .define(users.name, users.attributes, users.options);
+
+const init = async (force?: boolean) => {
+  await Domains.sync({force});
+  await Users.sync({force});
 };
 
-const makeSureTableExists = async (name: string): Promise<boolean> => {
-  const exists = await tableExists(name);
-  if (exists) {
-    return true;
-  }
-  await client.query(`
-    CREATE TABLE users (
-      id     serial PRIMARY KEY,
-      domain text   NOT NULL,
-      email  text   NOT NULL,
-    )
-  `);
-  return false;
-};
-
-client.connect(async (err) => {
-  if (err) {
-    throw new Error(err.message);
-  }
-  await makeSureTableExists('users');
-  const res = await client.query('SELECT * from users');
-  console.log(res.rows);
-  process.exit(0);
+init(true).then(async () => {
+  console.log(await Users.findAll({raw: true})); console.log(await Domains.findAll({raw: true}));
+  await Domains.create({
+    name: 'test',
+    data: '{}',
+  });
+  await Domains.create({
+    name: 'test2',
+    data: '{}',
+  });
+  await Users.create({
+    domain: 2,
+    email: 'test@test.test',
+    password: 'test',
+  });
+  console.log(await Users.findAll({raw: true})); console.log(await Domains.findAll({raw: true}));
 });
+
+setTimeout(() => process.exit(), 4000);
