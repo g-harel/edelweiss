@@ -3,7 +3,7 @@ import * as Sequelize from 'sequelize';
 
 interface IUser {
   id?: number;
-  domain: number;
+  domainId: number;
   email: string;
   password: string;
 }
@@ -16,13 +16,9 @@ const attributes = {
     primaryKey: true,
     autoIncrement: true,
   },
-    domain: {
+  domainId: {
     type: Sequelize.INTEGER,
     allowNull: false,
-    references: {
-      model: 'domains',
-      key: 'id',
-    },
   },
   email: {
     type: Sequelize.STRING,

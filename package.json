@@ -4,6 +4,7 @@
   "scripts": {
     "start": "docker-compose up -d",
     "build": "tsc",
+    "watch": "nodemon -w ./src -e ts -x ts-node src/api",
     "test": "run-s test:*",
     "test:lint": "tslint -c tslint.json 'src/**/*.ts' || true"
   },
