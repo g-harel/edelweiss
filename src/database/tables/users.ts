@@ -8,41 +8,54 @@ interface IUser {
   password: string;
 }
 
-const name = 'users';
-
-const attributes = {
-  id: {
-    type: Sequelize.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  domainId: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-  },
-  email: {
-    type: Sequelize.STRING,
-    allowNull: false,
-    unique: 'domain user',
-    validate: {
-      isEmail: true,
+const init = async (database) => {
+  const name = 'users';
+  const attributes = {
+    id: {
+      type: Sequelize.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-  },
-  password: {
-    type: Sequelize.STRING(60),
-    allowNull: false,
-  },
+    domainId: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
+    email: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: 'domain user',
+      validate: {
+        isEmail: true,
+      },
+    },
+    password: {
+      type: Sequelize.STRING(60),
+      allowNull: false,
+    },
+  };
+  const options = {
+    hooks: {
+      beforeCreate: async (entry: IUser) => {
+        entry.password = await bcrypt.hash(entry.password, 10);
+        return;
+      },
+    },
+  };
+  return database.define(name, attributes, options);
 };
 
-const options = {
-  hooks: {
-    beforeCreate: async (entry: IUser) => {
-      entry.password = await bcrypt.hash(entry.password, 10);
-      return;
-    },
-  },
+const query  = (Model) => {
+  const auth = async (callback, {domainId, email, password}) => {
+    const user = await Model.findOne({
+      attributes: ['password'],
+      where: {email, domainId},
+    });
+    bcrypt.compare(password, user.password, callback);
+  };
+
+  return {auth};
 };
 
 export default IUser;
 
-export {name, attributes, options};
+export {init, query};

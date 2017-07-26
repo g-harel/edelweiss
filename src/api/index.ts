@@ -1,48 +1,44 @@
+import * as bodyParser from 'body-parser';
 import * as express from 'express';
 
-import * as databse from '../database';
+import * as database from '../database';
 import IDomain from '../database/tables/domains';
 import IUser from '../database/tables/users';
 
-databse.init(true)
-  .then(({Domains, Users}) => {
+database.init(true)
+  .then(({domains, users}) => {
     const app = express();
 
-    Domains.create({
-      name: 'test',
-      data: '{"test": true}',
+    app.use(bodyParser.json());
+
+    app.post('/api/user/auth', (req, res) => {
+      const {domainId, email, password} = req.body;
+      users.auth((err, auth) => {
+        if (err) {
+          return res.sendStatus(500);
+        }
+        res.sendStatus(auth ? 200 : 401);
+      }, {domainId, email, password});
     });
 
-    Users.create({
-      domainId: 1,
-      email: 'test@example.com',
-      password: 'password123',
-    });
-
-    app.get('/api/domain/:name', async (req, res) => {
-      const domain = await Domains
-        .find({
-          attributes: ['name', 'data'],
-          where: {
-            name: req.params.name,
-          },
-        });
-      if (domain) {
+    app.get('/api/domain/:name', (req, res) => {
+      domains.get((err, domain) => {
+        if (err) {
+          return res.sendStatus(404);
+        }
         res.setHeader('Content-Type', 'application/json');
         res.send(JSON.stringify(domain));
         return;
-      }
-      res.sendStatus(404);
+      }, {name: req.params.name});
     });
 
     app.delete('/api/domain/:name', async (req, res) => {
-      const success = await Domains
-        .destroy({
-          where: {
-            name: req.params.name,
-          },
-        });
-      res.sendStatus(200);
+      domains.del((err, amount) => {
+        if (err) {
+          return res.sendStatus(500);
+        }
+        res.sendStatus(200);
+      }, {name: req.params.name});
     });
 
     app.listen(3000, () => {
