@@ -6,39 +6,31 @@ import IDomain from '../database/tables/domains';
 import IUser from '../database/tables/users';
 
 database.init(true)
-  .then(({domains, users}) => {
+  .then(({Domains, Users}) => {
     const app = express();
 
     app.use(bodyParser.json());
 
-    app.post('/api/user/auth', (req, res) => {
+    app.post('/api/user/auth', async (req, res) => {
       const {domainId, email, password} = req.body;
-      users.auth((err, auth) => {
-        if (err) {
-          return res.sendStatus(500);
-        }
-        res.sendStatus(auth ? 200 : 401);
-      }, {domainId, email, password});
+      const success = await Users.authenticate({domainId, email, password});
+      res.sendStatus(success ? 200 : 401);
     });
 
-    app.get('/api/domain/:name', (req, res) => {
-      domains.get((err, domain) => {
-        if (err) {
-          return res.sendStatus(404);
-        }
-        res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify(domain));
-        return;
-      }, {name: req.params.name});
+    app.get('/api/domain/:name', async (req, res) => {
+      const domain = await Domains.get({name: req.params.name});
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify(domain));
     });
 
     app.delete('/api/domain/:name', async (req, res) => {
-      domains.del((err, amount) => {
-        if (err) {
-          return res.sendStatus(500);
-        }
-        res.sendStatus(200);
-      }, {name: req.params.name});
+      const success = await Domains.delete({name: req.params.name});
+      res.sendStatus(success ? 200 : 401);
+    });
+
+    app.use((err, req, res, next) => {
+      console.log(err, err.stack);
+      res.sendStatus(500);
     });
 
     app.listen(3000, () => {

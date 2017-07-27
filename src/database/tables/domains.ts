@@ -1,54 +1,61 @@
 import * as Sequelize from 'sequelize';
 
+import Table from './';
+
 interface IDomain {
   id?: number;
   name: string;
   data: string;
 }
 
-const init = async (database) => {
-  const name = 'domains';
-  const attributes = {
-    id: {
-      type: Sequelize.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    name: {
-      type: Sequelize.STRING,
-      unique: true,
-      allowNull: false,
-    },
-    data: {
-      type: Sequelize.JSON,
-      allowNull: false,
-    },
-  };
-  const options = {};
-  return database.define(name, attributes, options);
-};
+class DomainsTable extends Table {
+  public getName() {
+    return 'domains';
+  }
 
-const query = (Model) => {
-  const get = (callback, {name}) => {
-    const domain = Model.findOne({
+  public getAttributes() {
+    return {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: Sequelize.STRING,
+        unique: true,
+        allowNull: false,
+      },
+      data: {
+        type: Sequelize.JSON,
+        allowNull: false,
+      },
+    };
+  }
+
+  public getOptions() {
+    return {};
+  }
+
+  public getConfig() {
+    return {};
+  }
+
+  public async get({name}) {
+    const domain = await this.model.findOne({
       attributes: ['name', 'data'],
       where: {name},
-    })
-      .then((res) => callback(null, res))
-      .catch((reason) => callback(reason, null));
-  };
+    }) as IDomain;
+    return domain;
+  }
 
-  const del = (callback, {name}) => {
-    Model.destroy({
+  public async delete({name}) {
+    const deleted = await this.model.destroy({
       where: {name},
-    })
-      .then((res) => callback(null, res))
-      .catch((reason) => callback(reason, null));
-  };
-
-  return {get, del};
-};
+    });
+    return !!deleted;
+  }
+}
 
 export default IDomain;
 
-export {init, query};
+export {DomainsTable};

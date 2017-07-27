@@ -1,6 +1,8 @@
 import * as bcrypt from 'bcrypt';
 import * as Sequelize from 'sequelize';
 
+import Table from './';
+
 interface IUser {
   id?: number;
   domainId: number;
@@ -8,54 +10,72 @@ interface IUser {
   password: string;
 }
 
-const init = async (database) => {
-  const name = 'users';
-  const attributes = {
-    id: {
-      type: Sequelize.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    domainId: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-    email: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      unique: 'domain user',
-      validate: {
-        isEmail: true,
-      },
-    },
-    password: {
-      type: Sequelize.STRING(60),
-      allowNull: false,
-    },
-  };
-  const options = {
-    hooks: {
-      beforeCreate: async (entry: IUser) => {
-        entry.password = await bcrypt.hash(entry.password, 10);
-        return;
-      },
-    },
-  };
-  return database.define(name, attributes, options);
-};
+class UsersTable extends Table {
+  public getName() {
+    return 'users';
+  }
 
-const query  = (Model) => {
-  const auth = async (callback, {domainId, email, password}) => {
-    const user = await Model.findOne({
+  public getAttributes() {
+    return {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      domainId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: 'domain user',
+        validate: {
+          isEmail: true,
+        },
+      },
+      password: {
+        type: Sequelize.STRING(60),
+        allowNull: false,
+      },
+    };
+  }
+
+  public getOptions() {
+    return {
+      hooks: {
+        beforeCreate: async (entry: IUser) => {
+          entry.password = await bcrypt.hash(entry.password, 10);
+          return;
+        },
+      },
+    };
+  }
+
+  public getConfig() {
+    return {
+      belongsTo: {
+        name: 'domains',
+        options: {
+          onDelete: 'CASCADE',
+          hooks: true,
+        },
+      },
+    };
+  }
+
+  public async authenticate({domainId, email, password}) {
+    const user = await this.model.findOne({
       attributes: ['password'],
       where: {email, domainId},
-    });
-    bcrypt.compare(password, user.password, callback);
-  };
-
-  return {auth};
-};
+    }) as IUser;
+    if (user == null) {
+      return await false;
+    }
+    return await bcrypt.compare(password, user.password);
+  }
+}
 
 export default IUser;
 
-export {init, query};
+export {UsersTable};
