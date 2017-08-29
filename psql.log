@@ -1,0 +1,11 @@
+# connect
+psql -h localhost -U postgres
+
+# list databases
+\list
+
+# connect to database
+\connect {name}
+
+# list tables
+\d

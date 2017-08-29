@@ -1,5 +1,7 @@
-*.log
-coverage
-node_modules
-package-lock*
-dist
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.glide/
