@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/g-harel/edelweiss/src/users"
+
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 )
@@ -36,45 +38,11 @@ func initialize() *sql.DB {
 	return db
 }
 
-type user struct {
-	ID       int    `json:"id"`
-	DomainID int    `json:"domain_id"`
-	Email    string `json:"email"`
-	Hash     string `json:"hash"`
-}
-
-func readUsers(db *sql.DB) []user {
-	rows, err := db.Query("SELECT * FROM users")
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer rows.Close()
-
-	var res []user
-
-	for rows.Next() {
-		var (
-			id       int
-			domainID int
-			email    string
-			hash     string
-		)
-		rows.Scan(&id, &domainID, &email, &hash)
-		res = append(res, user{id, domainID, email, hash})
-	}
-
-	if err = rows.Err(); err != nil {
-		fmt.Println(err)
-	}
-
-	return res
-}
-
 func handler(db *sql.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		w.Header().Set("Content-Type", "application/json")
-		users := readUsers(db)
-		b, err := json.Marshal(users)
+		res := users.ReadAll(db)
+		b, err := json.Marshal(res)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -87,7 +55,32 @@ func main() {
 	db := initialize()
 	defer db.Close()
 
-	fmt.Printf("%+v", readUsers(db))
+	// adding users
+	err := users.Add(db, &users.User{
+		DomainID: 1,
+		Email: "email1@example.com",
+		Hash: "password123",
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = users.Add(db, &users.User{
+		DomainID: 1,
+		Email: "email2@example.com",
+		Hash: "password123",
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = users.Add(db, &users.User{
+		DomainID: 2,
+		Email: "email1@example.com",
+		Hash: "password123",
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	//
 
 	router := httprouter.New()
 	router.GET("/api/users", handler(db))
