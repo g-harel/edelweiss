@@ -18,8 +18,3 @@ CREATE TABLE users (
     REFERENCES domains (id)
     ON DELETE CASCADE
 );
-
---
-
-INSERT INTO domains (name, data) VALUES ('name1', '{}');
-INSERT INTO domains (name, data) VALUES ('name2', '{}');

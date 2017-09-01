@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/g-harel/edelweiss/src/domains"
 	"github.com/g-harel/edelweiss/src/users"
 
 	"github.com/julienschmidt/httprouter"
@@ -38,13 +39,38 @@ func initialize() *sql.DB {
 	return db
 }
 
-func handler(db *sql.DB) httprouter.Handle {
+func domainsHandler(db *sql.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		w.Header().Set("Content-Type", "application/json")
-		res := users.ReadAll(db)
+		res, err := domains.ReadAll(db)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
 		b, err := json.Marshal(res)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
+		fmt.Fprintf(w, string(b))
+	}
+}
+
+func usersHandler(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		w.Header().Set("Content-Type", "application/json")
+		res, err := users.ReadAll(db)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
+		b, err := json.Marshal(res)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
 			return
 		}
 		fmt.Fprintf(w, string(b))
@@ -55,35 +81,12 @@ func main() {
 	db := initialize()
 	defer db.Close()
 
-	// adding users
-	err := users.Add(db, &users.User{
-		DomainID: 1,
-		Email: "email1@example.com",
-		Hash: "password123",
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	err = users.Add(db, &users.User{
-		DomainID: 1,
-		Email: "email2@example.com",
-		Hash: "password123",
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	err = users.Add(db, &users.User{
-		DomainID: 2,
-		Email: "email1@example.com",
-		Hash: "password123",
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	//
+	domains.Test(db)
+	users.Test(db)
 
 	router := httprouter.New()
-	router.GET("/api/users", handler(db))
+	router.GET("/api/domains", domainsHandler(db))
+	router.GET("/api/users", usersHandler(db))
 
 	http.ListenAndServe(":8080", router)
 }

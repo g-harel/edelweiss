@@ -17,5 +17,8 @@
     /:domain/register
     /:domain/view
 
+  ## ? implement queue type mechanism to handle non-read requests ~ workers pulling from queue
+  ## ? define some standard interface being returned from db packages
+
 2
   ...
