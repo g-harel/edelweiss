@@ -7,8 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/g-harel/edelweiss/src/domains"
-	"github.com/g-harel/edelweiss/src/users"
+	"github.com/g-harel/edelweiss/src/models"
 
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
@@ -39,29 +38,12 @@ func initialize() *sql.DB {
 	return db
 }
 
-func domainsHandler(db *sql.DB) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		w.Header().Set("Content-Type", "application/json")
-		res, err := domains.ReadAll(db)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err)
-			return
-		}
-		b, err := json.Marshal(res)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err)
-			return
-		}
-		fmt.Fprintf(w, string(b))
-	}
-}
+type generator func() (interface{}, error)
 
-func usersHandler(db *sql.DB) httprouter.Handle {
+func sendJSON(payload generator) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		w.Header().Set("Content-Type", "application/json")
-		res, err := users.ReadAll(db)
+		res, err := payload()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Println(err)
@@ -81,12 +63,27 @@ func main() {
 	db := initialize()
 	defer db.Close()
 
-	domains.Test(db)
-	users.Test(db)
+	domains := models.Domains{DB: db}
+	users := models.Users{DB: db}
+
+	err := models.TestDomains(domains)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = models.TestUsers(users)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	router := httprouter.New()
-	router.GET("/api/domains", domainsHandler(db))
-	router.GET("/api/users", usersHandler(db))
+
+	router.GET("/api/domains", sendJSON(func() (interface{}, error) {
+		return domains.ReadAll()
+	}))
+
+	router.GET("/api/users", sendJSON(func() (interface{}, error) {
+		return users.ReadAll()
+	}))
 
 	http.ListenAndServe(":8080", router)
 }
