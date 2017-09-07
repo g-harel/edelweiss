@@ -14,7 +14,14 @@ import (
 )
 
 func initialize() *sql.DB {
-	db, err := sql.Open("postgres", "user=postgres dbname=edelweiss sslmode=disable")
+	db, err := sql.Open("postgres", `
+		host=192.168.99.100
+		port=5432
+		user=postgres
+		password=password123
+		dbname=edelweiss
+		sslmode=disable
+	`)
 	if err != nil {
 		panic(err)
 	}

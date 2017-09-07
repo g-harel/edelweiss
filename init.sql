@@ -1,5 +1,5 @@
-DROP TABLE users;
-DROP TABLE domains;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS domains;
 
 CREATE TABLE domains (
   id SERIAL PRIMARY KEY,
