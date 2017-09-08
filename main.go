@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/g-harel/edelweiss/src/models"
@@ -13,7 +12,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func initialize() *sql.DB {
+func connectPostgres() *sql.DB {
 	db, err := sql.Open("postgres", `
 		host=192.168.99.100
 		port=5432
@@ -31,26 +30,17 @@ func initialize() *sql.DB {
 		panic(err)
 	}
 
-	bytes, err := ioutil.ReadFile("init.sql")
-	if err != nil {
-		panic(err)
-	}
-
-	query := string(bytes)
-	_, err = db.Exec(query)
-	if err != nil {
-		panic(err)
-	}
-
 	return db
 }
 
-type generator func() (interface{}, error)
-
-func sendJSON(payload generator) httprouter.Handle {
+func sendJSON(res interface{}, err error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
-		res, err := payload()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Println(err)
@@ -67,13 +57,28 @@ func sendJSON(payload generator) httprouter.Handle {
 }
 
 func main() {
-	db := initialize()
+	db := connectPostgres()
 	defer db.Close()
 
-	domains := models.Domains{DB: db}
-	users := models.Users{DB: db}
+	_, err := db.Exec(`
+		DROP TABLE IF EXISTS users;
+		DROP TABLE IF EXISTS domains;
+	`)
+	if err != nil {
+		panic(err)
+	}
 
-	err := models.TestDomains(domains)
+	domains, err := models.CreateDomains(db)
+	if err != nil {
+		panic(err)
+	}
+
+	users, err := models.CreateUsers(db)
+	if err != nil {
+		panic(err)
+	}
+
+	err = models.TestDomains(domains)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -84,13 +89,9 @@ func main() {
 
 	router := httprouter.New()
 
-	router.GET("/api/domains", sendJSON(func() (interface{}, error) {
-		return domains.ReadAll()
-	}))
+	router.GET("/api/domains", sendJSON(domains.ReadAll()))
 
-	router.GET("/api/users", sendJSON(func() (interface{}, error) {
-		return users.ReadAll()
-	}))
+	router.GET("/api/users", sendJSON(users.ReadAll()))
 
 	http.ListenAndServe(":8080", router)
 }

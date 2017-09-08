@@ -13,20 +13,36 @@ type Domain struct {
 	Data string `json:"data"`
 }
 
-// IDomains is the domains' database interface.
-type IDomains interface {
+// Domains is the domains' database interface.
+type Domains interface {
 	Add(name string, data string) (int, error)
 	UpdateData(id int, data string) error
 	ReadAll() ([]Domain, error)
 }
 
-// Domains database
-type Domains struct {
+// CreateDomains creates the model.
+func CreateDomains(db *sql.DB) (Domains, error) {
+	_, err := db.Exec(`
+		CREATE TABLE domains (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(32) NOT NULL,
+			data JSON NOT NULL,
+			CONSTRAINT uq_name UNIQUE (name)
+		);
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	return domains{DB: db}, nil
+}
+
+type domains struct {
 	DB *sql.DB
 }
 
 // Add adds a new domain to the database and returns the id.
-func (d Domains) Add(name string, data string) (int, error) {
+func (d domains) Add(name string, data string) (int, error) {
 	stmt, err := d.DB.Prepare(`
 		INSERT INTO domains (name, data)
 			VALUES ($1, $2)
@@ -54,7 +70,7 @@ func (d Domains) Add(name string, data string) (int, error) {
 
 // UpdateData will change the data for a domain in the database.
 // Authentication must be done before this point.
-func (d Domains) UpdateData(id int, data string) error {
+func (d domains) UpdateData(id int, data string) error {
 	stmt, err := d.DB.Prepare(`
 		UPDATE domains SET data=$1 WHERE id=$2
 	`)
@@ -72,7 +88,7 @@ func (d Domains) UpdateData(id int, data string) error {
 }
 
 // ReadAll reads all domains from the database
-func (d Domains) ReadAll() ([]Domain, error) {
+func (d domains) ReadAll() ([]Domain, error) {
 	rows, err := d.DB.Query(`
 		SELECT * FROM domains
 	`)

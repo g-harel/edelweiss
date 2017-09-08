@@ -16,21 +16,42 @@ type User struct {
 	Hash     string `json:"-"`
 }
 
-// IUsers is the Users' database interface.
-type IUsers interface {
+// Users is the Users' database interface.
+type Users interface {
 	Add(email string, domainID int, password string) (int, error)
 	Authenticate(email string, domainID int, password string) (int, error)
 	ChangePassword(id int, password string) error
 	ReadAll() ([]User, error)
 }
 
-// Users database
-type Users struct {
+// CreateUsers creates the model.
+func CreateUsers(db *sql.DB) (Users, error) {
+	_, err := db.Exec(`
+		CREATE TABLE users (
+			id SERIAL PRIMARY KEY,
+			domain_id INTEGER NOT NULL,
+			email VARCHAR(32) NOT NULL,
+			hash VARCHAR(60) NOT NULL,
+			CONSTRAINT uq_domain_email UNIQUE (domain_id, email),
+			CONSTRAINT fk_domain_id FOREIGN KEY (domain_id)
+				REFERENCES domains (id)
+				ON DELETE CASCADE
+		);
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	return users{DB: db}, nil
+}
+
+// users database
+type users struct {
 	DB *sql.DB
 }
 
 // Add adds a new user to the database and returns the id.
-func (u Users) Add(email string, domainID int, password string) (int, error) {
+func (u users) Add(email string, domainID int, password string) (int, error) {
 	stmt, err := u.DB.Prepare(`
 		INSERT INTO users (domain_id, email, hash)
 			VALUES ($1, $2, $3)
@@ -62,7 +83,7 @@ func (u Users) Add(email string, domainID int, password string) (int, error) {
 }
 
 // Authenticate will authenticate a user with the database and return the id.
-func (u Users) Authenticate(email string, domainID int, password string) (int, error) {
+func (u users) Authenticate(email string, domainID int, password string) (int, error) {
 	stmt, err := u.DB.Prepare(`
 		SELECT * FROM users
 			WHERE email=$1 AND domain_id=$2
@@ -97,7 +118,7 @@ func (u Users) Authenticate(email string, domainID int, password string) (int, e
 
 // ChangePassword will change the password of the user in the database
 // Authentication must be done before this point.
-func (u Users) ChangePassword(id int, password string) error {
+func (u users) ChangePassword(id int, password string) error {
 	hash, err := hashPassword(password)
 	if err != nil {
 		return err
@@ -120,7 +141,7 @@ func (u Users) ChangePassword(id int, password string) error {
 }
 
 // ReadAll reads all users from the database
-func (u Users) ReadAll() ([]User, error) {
+func (u users) ReadAll() ([]User, error) {
 	rows, err := u.DB.Query(`
 		SELECT * FROM users
 	`)

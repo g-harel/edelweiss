@@ -1,7 +1,11 @@
 package models
 
+import (
+	"fmt"
+)
+
 // TestUsers runs some mock actions.
-func TestUsers(users IUsers) error {
+func TestUsers(users Users) error {
 	// adding users
 	userList := []User{
 		User{
@@ -50,12 +54,13 @@ func TestUsers(users IUsers) error {
 		return err
 	}
 
+	fmt.Println("✓ Users")
 	return nil
 }
 
 
 // TestDomains runs some mock actions
-func TestDomains(domains IDomains) error {
+func TestDomains(domains Domains) error {
 	// adding domains
 	domainList := []Domain{
 		Domain{
@@ -77,5 +82,6 @@ func TestDomains(domains IDomains) error {
 	// testing domain funcs
 	domains.UpdateData(1, `{"updated": true}`)
 
+	fmt.Println("✓ Domains")
 	return nil
 }
