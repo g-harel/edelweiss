@@ -5,7 +5,7 @@ import (
 )
 
 // TestUsers runs some mock actions.
-func TestUsers(users Users) error {
+func TestUsers(users IUsers) error {
 	// adding users
 	userList := []User{
 		User{
@@ -58,9 +58,8 @@ func TestUsers(users Users) error {
 	return nil
 }
 
-
 // TestDomains runs some mock actions
-func TestDomains(domains Domains) error {
+func TestDomains(domains IDomains) error {
 	// adding domains
 	domainList := []Domain{
 		Domain{

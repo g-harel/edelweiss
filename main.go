@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,28 +8,38 @@ import (
 	"github.com/g-harel/edelweiss/src/models"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/go-redis/redis"
 	_ "github.com/lib/pq"
 )
 
-func connectPostgres() *sql.DB {
-	db, err := sql.Open("postgres", `
-		host=192.168.99.100
-		port=5432
-		user=postgres
-		password=password123
-		dbname=edelweiss
-		sslmode=disable
-	`)
+func connectRedis() *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "192.168.99.100:6379",
+		Password: "password123",
+		DB:       0,
+	})
+
+	_, err := client.Ping().Result()
 	if err != nil {
 		panic(err)
 	}
 
-	err = db.Ping()
+	err = client.Set("test", "true", 0).Err()
 	if err != nil {
 		panic(err)
 	}
 
-	return db
+	val, err := client.Get("test").Result()
+	if err != nil {
+		panic(err)
+	}
+	if string(val) == "true" {
+		fmt.Println("✓ Redis")
+	} else {
+		panic(fmt.Errorf("redis test failed"))
+	}
+
+	return client
 }
 
 func sendJSON(res interface{}, err error) httprouter.Handle {
@@ -56,42 +65,28 @@ func sendJSON(res interface{}, err error) httprouter.Handle {
 	}
 }
 
+func authenticationMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("test")
+    next.ServeHTTP(w, r)
+  })
+}
+
 func main() {
-	db := connectPostgres()
-	defer db.Close()
+	client := connectRedis()
+	defer client.Close()
 
-	_, err := db.Exec(`
-		DROP TABLE IF EXISTS users;
-		DROP TABLE IF EXISTS domains;
-	`)
+	err := models.Init()
+	defer models.Close()
 	if err != nil {
 		panic(err)
-	}
-
-	domains, err := models.CreateDomains(db)
-	if err != nil {
-		panic(err)
-	}
-
-	users, err := models.CreateUsers(db)
-	if err != nil {
-		panic(err)
-	}
-
-	err = models.TestDomains(domains)
-	if err != nil {
-		fmt.Println(err)
-	}
-	err = models.TestUsers(users)
-	if err != nil {
-		fmt.Println(err)
 	}
 
 	router := httprouter.New()
 
-	router.GET("/api/domains", sendJSON(domains.ReadAll()))
+	router.GET("/api/domains", sendJSON(models.Domains.ReadAll()))
 
-	router.GET("/api/users", sendJSON(users.ReadAll()))
+	router.GET("/api/users", sendJSON(models.Users.ReadAll()))
 
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(":8080", authenticationMiddleware(router))
 }

@@ -13,17 +13,17 @@ type Domain struct {
 	Data string `json:"data"`
 }
 
-// Domains is the domains' database interface.
-type Domains interface {
+// IDomains is the domains' database interface.
+type IDomains interface {
 	Add(name string, data string) (int, error)
 	UpdateData(id int, data string) error
 	ReadAll() ([]Domain, error)
 }
 
 // CreateDomains creates the model.
-func CreateDomains(db *sql.DB) (Domains, error) {
+func CreateDomains(db *sql.DB) (IDomains, error) {
 	_, err := db.Exec(`
-		CREATE TABLE domains (
+		CREATE TABLE IF NOT EXISTS domains (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(32) NOT NULL,
 			data JSON NOT NULL,

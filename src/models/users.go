@@ -16,8 +16,8 @@ type User struct {
 	Hash     string `json:"-"`
 }
 
-// Users is the Users' database interface.
-type Users interface {
+// IUsers is the IUsers' database interface.
+type IUsers interface {
 	Add(email string, domainID int, password string) (int, error)
 	Authenticate(email string, domainID int, password string) (int, error)
 	ChangePassword(id int, password string) error
@@ -25,9 +25,9 @@ type Users interface {
 }
 
 // CreateUsers creates the model.
-func CreateUsers(db *sql.DB) (Users, error) {
+func CreateUsers(db *sql.DB) (IUsers, error) {
 	_, err := db.Exec(`
-		CREATE TABLE users (
+		CREATE TABLE IF NOT EXISTS users (
 			id SERIAL PRIMARY KEY,
 			domain_id INTEGER NOT NULL,
 			email VARCHAR(32) NOT NULL,
