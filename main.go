@@ -67,7 +67,7 @@ func sendJSON(res interface{}, err error) httprouter.Handle {
 
 func authenticationMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("test")
+    fmt.Println("authenticationMiddleware")
     next.ServeHTTP(w, r)
   })
 }
@@ -76,17 +76,20 @@ func main() {
 	client := connectRedis()
 	defer client.Close()
 
-	err := models.Init()
-	defer models.Close()
+	db, err := models.Init()
+	defer db.Close()
 	if err != nil {
 		panic(err)
 	}
 
 	router := httprouter.New()
 
-	router.GET("/api/domains", sendJSON(models.Domains.ReadAll()))
+	users := models.Users{DB: db}
+	domains := models.Domains{DB: db}
 
-	router.GET("/api/users", sendJSON(models.Users.ReadAll()))
+	router.GET("/api/users", sendJSON(users.ReadAll()))
+
+	router.GET("/api/domains", sendJSON(domains.ReadAll()))
 
 	http.ListenAndServe(":8080", authenticationMiddleware(router))
 }

@@ -2,10 +2,27 @@ package models
 
 import (
 	"fmt"
+	"database/sql"
 )
 
-// TestUsers runs some mock actions.
-func TestUsers(users IUsers) error {
+// Test runs some basic tests on the models.
+func Test(db *sql.DB) {
+	err := testDomains(Domains{db})
+	if err != nil {
+		fmt.Printf("domains model tests have failed: %v\n", err)
+	} else {
+		fmt.Println("✓ Domains")
+	}
+
+	err = testUsers(Users{db})
+	if err != nil {
+		fmt.Printf("users model tests have failed: %v\n", err)
+	} else {
+		fmt.Println("✓ Users")
+	}
+}
+
+func testUsers(users Users) error {
 	// adding users
 	userList := []User{
 		User{
@@ -54,12 +71,10 @@ func TestUsers(users IUsers) error {
 		return err
 	}
 
-	fmt.Println("✓ Users")
 	return nil
 }
 
-// TestDomains runs some mock actions
-func TestDomains(domains IDomains) error {
+func testDomains(domains Domains) error {
 	// adding domains
 	domainList := []Domain{
 		Domain{
@@ -81,6 +96,5 @@ func TestDomains(domains IDomains) error {
 	// testing domain funcs
 	domains.UpdateData(1, `{"updated": true}`)
 
-	fmt.Println("✓ Domains")
 	return nil
 }

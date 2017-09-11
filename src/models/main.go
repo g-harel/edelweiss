@@ -1,17 +1,13 @@
 package models
 
 import (
-	"fmt"
 	"database/sql"
 )
 
-var db *sql.DB
-
-var Domains IDomains
-var Users IUsers
-
-func connect() error {
-	psql, err := sql.Open("postgres", `
+// Init opens a connection to the database and
+// initializes the required models.
+func Init() (*sql.DB, error) {
+	db, err := sql.Open("postgres", `
 		host=192.168.99.100
 		port=5432
 		user=postgres
@@ -20,57 +16,41 @@ func connect() error {
 		sslmode=disable
 	`)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = psql.Ping()
+	err = db.Ping()
 	if err != nil {
-		return err
-	}
-
-	db = psql
-	return nil
-}
-
-func Init() error {
-	err := connect()
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = db.Exec(`
 		DROP TABLE IF EXISTS users;
 		DROP TABLE IF EXISTS domains;
+
+		CREATE TABLE IF NOT EXISTS domains (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(32) NOT NULL,
+			data JSON NOT NULL,
+			CONSTRAINT uq_name UNIQUE (name)
+		);
+
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			domain_id INTEGER NOT NULL,
+			email VARCHAR(32) NOT NULL,
+			hash VARCHAR(60) NOT NULL,
+			CONSTRAINT uq_domain_email UNIQUE (domain_id, email),
+			CONSTRAINT fk_domain_id FOREIGN KEY (domain_id)
+				REFERENCES domains (id)
+				ON DELETE CASCADE
+		);
 	`)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	domains, err := CreateDomains(db)
-	if err != nil {
-		return err
-	}
+	Test(db)
 
-	users, err := CreateUsers(db)
-	if err != nil {
-		return err
-	}
-
-	err = TestDomains(domains)
-	if err != nil {
-		fmt.Println(err)
-	}
-	err = TestUsers(users)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	Domains = domains
-	Users = users
-
-	return nil
-}
-
-func Close() error {
-	return db.Close()
+	return db, nil
 }
