@@ -6,41 +6,11 @@ import (
 	"net/http"
 
 	"github.com/g-harel/edelweiss/src/models"
+	"github.com/g-harel/edelweiss/src/sessions"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/go-redis/redis"
 	_ "github.com/lib/pq"
 )
-
-func connectRedis() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "192.168.99.100:6379",
-		Password: "password123",
-		DB:       0,
-	})
-
-	_, err := client.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
-
-	err = client.Set("test", "true", 0).Err()
-	if err != nil {
-		panic(err)
-	}
-
-	val, err := client.Get("test").Result()
-	if err != nil {
-		panic(err)
-	}
-	if string(val) == "true" {
-		fmt.Println("✓ Redis")
-	} else {
-		panic(fmt.Errorf("redis test failed"))
-	}
-
-	return client
-}
 
 func sendJSON(res interface{}, err error) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -65,16 +35,12 @@ func sendJSON(res interface{}, err error) httprouter.Handle {
 	}
 }
 
-func authenticationMiddleware(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("authenticationMiddleware")
-    next.ServeHTTP(w, r)
-  })
-}
-
 func main() {
-	client := connectRedis()
+	client, err := sessions.Init()
 	defer client.Close()
+	if err != nil {
+		panic(err)
+	}
 
 	db, err := models.Init()
 	defer db.Close()
@@ -91,5 +57,5 @@ func main() {
 
 	router.GET("/api/domains", sendJSON(domains.ReadAll()))
 
-	http.ListenAndServe(":8080", authenticationMiddleware(router))
+	http.ListenAndServe(":8080", sessions.Middleware()(router))
 }

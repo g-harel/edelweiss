@@ -50,6 +50,7 @@ func Init() (*sql.DB, error) {
 		return nil, err
 	}
 
+	// TODO
 	Test(db)
 
 	return db, nil
