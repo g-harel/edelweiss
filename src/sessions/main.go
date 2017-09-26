@@ -3,9 +3,18 @@ package sessions
 import (
 	"fmt"
 	"net/http"
+	"math/rand"
+	"strconv"
 
 	"github.com/go-redis/redis"
 )
+
+type SessionID string
+
+type Session struct {
+	ip string;
+	userID int;
+}
 
 // Init opens a connection to the client.
 func Init() (*redis.Client, error) {
@@ -24,6 +33,44 @@ func Init() (*redis.Client, error) {
 	Test(client)
 
 	return client, nil
+}
+
+func Add(client *redis.Client, userID int, ip string) (SessionID, error) {
+	// TODO hash ip
+	sessionID := string(rand.Int())
+	status := client.HMSet(sessionID, map[string]interface{}{
+		"ip": ip,
+		"userID": userID,
+	})
+
+	if status.Err() != nil {
+		return "", status.Err()
+	}
+
+	return SessionID(sessionID), nil
+}
+
+func Get(client *redis.Client, sessionID SessionID) (Session, error) {
+	// TODO hardcoded
+	session := Session{}
+	val, err := client.HGet(string(sessionID), "ip").Result()
+	if err != nil {
+		return session, err
+	}
+
+	session.ip = val
+
+	val, err = client.HGet(string(sessionID), "userID").Result()
+	if err != nil {
+		return session, err
+	}
+
+	session.userID, err = strconv.Atoi(val)
+	if err != nil {
+		return session, err
+	}
+
+	return session, nil
 }
 
 func Middleware() func(http.Handler) http.Handler {

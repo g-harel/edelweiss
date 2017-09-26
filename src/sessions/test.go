@@ -22,4 +22,18 @@ func Test(client *redis.Client) {
 	} else {
 		fmt.Println("redis test failed")
 	}
+
+	id, err := Add(client, 1234567890, "192.0.0.1")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	session, err := Get(client, id)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if session.userID == 1234567890 && session.ip == "192.0.0.1" {
+		fmt.Println("✓ Sessions")
+	}
 }
