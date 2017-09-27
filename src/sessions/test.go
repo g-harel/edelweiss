@@ -33,7 +33,7 @@ func Test(client *redis.Client) {
 		fmt.Println(err)
 	}
 
-	if session.userID == 1234567890 && session.ip == "192.0.0.1" {
+	if session.userID == "1234567890" && session.ip != "192.0.0.1" {
 		fmt.Println("✓ Sessions")
 	}
 }

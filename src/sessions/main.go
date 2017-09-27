@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"net/http"
 	"math/rand"
-	"strconv"
 
+	"golang.org/x/crypto/bcrypt"
 	"github.com/go-redis/redis"
 )
 
+// SessionID is used to unikely identify sessions.
 type SessionID string
 
+// Session contains identifying information about the user.
 type Session struct {
 	ip string;
-	userID int;
+	userID string;
 }
 
 // Init opens a connection to the client.
@@ -35,11 +37,16 @@ func Init() (*redis.Client, error) {
 	return client, nil
 }
 
+// Add creates a session, saves it to the store and returns its id.
 func Add(client *redis.Client, userID int, ip string) (SessionID, error) {
-	// TODO hash ip
+	hashedIP, err := bcrypt.GenerateFromPassword([]byte(ip), 6)
+	if err != nil {
+		return "", err
+	}
+
 	sessionID := string(rand.Int())
 	status := client.HMSet(sessionID, map[string]interface{}{
-		"ip": ip,
+		"ip": hashedIP,
 		"userID": userID,
 	})
 
@@ -50,24 +57,16 @@ func Add(client *redis.Client, userID int, ip string) (SessionID, error) {
 	return SessionID(sessionID), nil
 }
 
+// Get retrives a session from the session store using a session id.
 func Get(client *redis.Client, sessionID SessionID) (Session, error) {
-	// TODO hardcoded
-	session := Session{}
-	val, err := client.HGet(string(sessionID), "ip").Result()
+	val, err := client.HGetAll(string(sessionID)).Result()
 	if err != nil {
-		return session, err
+		return Session{}, err
 	}
 
-	session.ip = val
-
-	val, err = client.HGet(string(sessionID), "userID").Result()
-	if err != nil {
-		return session, err
-	}
-
-	session.userID, err = strconv.Atoi(val)
-	if err != nil {
-		return session, err
+	session := Session{
+		ip: val["ip"],
+		userID: val["userID"],
 	}
 
 	return session, nil
