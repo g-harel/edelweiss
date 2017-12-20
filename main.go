@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/g-harel/edelweiss/src/models"
-	"github.com/g-harel/edelweiss/src/sessions"
-
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 )
@@ -36,26 +33,26 @@ func sendJSON(res interface{}, err error) httprouter.Handle {
 }
 
 func main() {
-	client, err := sessions.Init()
-	defer client.Close()
-	if err != nil {
-		panic(err)
-	}
+	/* 	client, err := sessions.Init()
+	   	defer client.Close()
+	   	if err != nil {
+	   		panic(err)
+	   	}
 
-	db, err := models.Init()
-	defer db.Close()
-	if err != nil {
-		panic(err)
-	}
+	   	db, err := models.Init()
+	   	defer db.Close()
+	   	if err != nil {
+	   		panic(err)
+	   	}
 
-	router := httprouter.New()
+	   	router := httprouter.New()
 
-	users := models.Users{DB: db}
-	domains := models.Domains{DB: db}
+	   	users := models.Users{DB: db}
+	   	domains := models.Domains{DB: db}
 
-	router.GET("/api/users", sendJSON(users.ReadAll()))
+	   	router.GET("/api/users", sendJSON(users.ReadAll()))
 
-	router.GET("/api/domains", sendJSON(domains.ReadAll()))
+	   	router.GET("/api/domains", sendJSON(domains.ReadAll()))
 
-	http.ListenAndServe(":8080", sessions.Middleware()(router))
+	   	http.ListenAndServe(":8080", sessions.Middleware()(router)) */
 }

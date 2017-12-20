@@ -1,24 +1,24 @@
 package models
 
 import (
-	"fmt"
-	"database/sql"
+	"testing"
 )
 
 // Test runs some basic tests on the models.
-func Test(db *sql.DB) {
-	err := testDomains(Domains{db})
+func TestModels(t *testing.T) {
+	db, err := Init()
 	if err != nil {
-		fmt.Printf("domains model tests have failed: %v\n", err)
-	} else {
-		fmt.Println("✓ Domains")
+		t.Fatalf("could not connect to database")
+	}
+
+	err = testDomains(Domains{db})
+	if err != nil {
+		t.Errorf("domains model tests have failed: %v\n", err)
 	}
 
 	err = testUsers(Users{db})
 	if err != nil {
-		fmt.Printf("users model tests have failed: %v\n", err)
-	} else {
-		fmt.Println("✓ Users")
+		t.Errorf("users model tests have failed: %v\n", err)
 	}
 }
 
