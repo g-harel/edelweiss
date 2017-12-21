@@ -11,7 +11,7 @@ func TestSessions(t *testing.T) {
 	}
 
 	se := Session{
-		ID:    "abc-def",
+		id:    "abc-def",
 		store: st,
 	}
 
@@ -19,7 +19,7 @@ func TestSessions(t *testing.T) {
 		key := "key"
 		value := "value"
 
-		err := st.set(se.ID, key, value)
+		err := st.set(se.id, key, value)
 		if err != nil {
 			t.Fatalf("could not set value in store: %v", err)
 		}
@@ -43,7 +43,7 @@ func TestSessions(t *testing.T) {
 			t.Fatalf("Set operation failed: %v", err)
 		}
 
-		res, err := st.get(se.ID, key)
+		res, err := st.get(se.id, key)
 		if err != nil {
 			t.Fatalf("could not get value from store: %v", err)
 		}

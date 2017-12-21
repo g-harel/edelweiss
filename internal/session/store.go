@@ -23,31 +23,35 @@ func newStore() (*store, error) {
 	return &store{client}, nil
 }
 
-func (s *store) create(ID string) error {
+func (s *store) create(id string) error {
 	pipe := s.client.Pipeline()
 
-	pipe.HMSet(ID, map[string]interface{}{"ID": ID})
-	pipe.Expire(ID, lifespan)
+	pipe.HMSet(id, map[string]interface{}{"id": id})
+	pipe.Expire(id, lifespan)
 
 	_, err := pipe.Exec()
 	return err
 }
 
-func (s *store) delete(ID string) error {
-	_, err := s.client.Del(ID).Result()
+func (s *store) delete(id string) error {
+	_, err := s.client.Del(id).Result()
 	return err
 }
 
-func (s *store) touch(ID string) error {
-	_, err := s.client.Expire(ID, lifespan).Result()
+func (s *store) touch(id string) error {
+	_, err := s.client.Expire(id, lifespan).Result()
 	return err
 }
 
-func (s *store) get(ID, key string) (string, error) {
-	return s.client.HGet(ID, key).Result()
+func (s *store) get(id, key string) (string, error) {
+	return s.client.HGet(id, key).Result()
 }
 
-func (s *store) set(ID, key, value string) error {
-	_, err := s.client.HSet(ID, key, value).Result()
+func (s *store) set(id, key, value string) error {
+	_, err := s.client.HSet(id, key, value).Result()
 	return err
+}
+
+func (s *store) close() error {
+	return s.client.Close()
 }

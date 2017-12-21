@@ -1,71 +1,80 @@
 package session
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func TestManager(t *testing.T) {
-	/* m, err := NewManager()
-	if err != nil {
-		t.Fatalf("could not create new manager: %s", err)
-	}
+	m, _ := NewManager()
 
-	t.Run("Start", func(t *testing.T) {
+	t.Run("Middleware", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		s, err := m.Start(w)
-		if err != nil {
-			t.Fatalf("error starting new session: %v", err)
-		}
+		sessionID := "1234-abcd"
 
-		// check that a session cookie was set in response
-		var match bool
-		for _, c := range w.Result().Cookies() {
-			if c.Name == cookey && c.MaxAge == int(lifespan.Seconds()) {
-				match = true
+		r1 := httptest.NewRequest("GET", "/", nil)
+		r1.AddCookie(&http.Cookie{
+			Name:  cookey,
+			Value: sessionID,
+		})
+		m.store.set(sessionID, "id", sessionID)
+		h1 := httprouter.Handle(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			s := m.Load(r)
+			if s.id != sessionID {
+				t.Errorf("session should be read from request cookies")
 			}
-		}
-		if match != true {
-			t.Errorf("cookie was not properly set")
-		}
+			val, err := m.store.client.TTL(sessionID).Result()
+			if err != nil {
+				t.Errorf("could not read ttl from session store client")
+			}
+			if val < 0 {
+				t.Errorf("existing session ttl should be reset")
+			}
+		})
+		m.Middleware(h1)(w, r1, httprouter.Params{})
 
-		// check that map was created in redis with the correct timeout
-		ttl, err := m.client.TTL(s.ID).Result()
-		if err != nil {
-			t.Fatalf("session storage was not created: %v", err)
-		}
-		if ttl > lifespan {
-			t.Errorf("session timeout does not match %v vs. %v", ttl, lifespan)
-		}
+		r2 := httptest.NewRequest("GET", "/", nil)
+		h2 := httprouter.Handle(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			s := m.Load(r)
+			if s == nil {
+				t.Errorf("session should be created when not in cookies")
+			}
+			val, err := m.store.client.Exists(sessionID).Result()
+			if err != nil {
+				t.Errorf("could not check session store client")
+			}
+			if val < 1 {
+				t.Errorf("session not created in store")
+			}
+			header := w.Header().Get("Set-Cookie")
+			if !strings.Contains(header, s.id) {
+				t.Errorf("set-cookie header was not added to response")
+			}
+		})
+		m.Middleware(h2)(w, r2, httprouter.Params{})
 	})
 
 	t.Run("Load", func(t *testing.T) {
 		r := httptest.NewRequest("GET", "/", nil)
 
-		sessionID := "session-id"
-
-		r.AddCookie(&http.Cookie{
-			Name:   cookey,
-			Value:  sessionID,
-			MaxAge: int(lifespan.Seconds()),
-		})
-		m.client.Set(sessionID, "", lifespan+time.Minute)
-
-		// check that correct session is loaded
-		s, err := m.Load(r)
-		if err != nil {
-			t.Fatalf("could not load session: %v", err)
-		}
-		if s.ID != sessionID || s.client != m.client {
-			t.Errorf("created invalid session")
+		s := m.Load(r)
+		if s != nil {
+			t.Errorf("load should return nil when no session is set")
 		}
 
-		// check that redis key expiration was extended
-		ttl, err := m.client.TTL(sessionID).Result()
-		if err != nil {
-			t.Fatalf("%s", err)
+		s1 := &Session{
+			id:    "abcd-1234",
+			store: m.store,
 		}
-		if ttl > lifespan {
-			t.Errorf("session timeout does not match %v vs. %v", ttl, lifespan)
+		r = r.WithContext(context.WithValue(r.Context(), &cookey, s1))
+		s2 := m.Load(r)
+		if s1 != s2 {
+			t.Fatalf("load should fetch the stored session")
 		}
-	}) */
+	})
 }
