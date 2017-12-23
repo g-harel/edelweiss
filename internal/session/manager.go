@@ -1,12 +1,11 @@
 package session
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -30,22 +29,13 @@ func NewManager() (*Manager, error) {
 }
 
 // Middleware creates a middlware function which adds session info to the request context.
-func (m *Manager) Middleware(next httprouter.Handle) httprouter.Handle {
-	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		s, err := getSession(m.store, r, w)
-		if err != nil {
-			fmt.Printf("error initalizing session from request: %v\n", err)
-		}
-		r = r.WithContext(context.WithValue(r.Context(), &cookey, s))
-		next(w, r, p)
-	})
-}
-
-// Load loads the session from the request context.
-// Returns a value of nil if the session was not found.
-func (m *Manager) Load(r *http.Request) *Session {
-	val, _ := r.Context().Value(&cookey).(*Session)
-	return val
+func (m *Manager) Middleware(c *gin.Context) {
+	s, err := getSession(m.store, c.Request, c.Writer)
+	if err != nil {
+		fmt.Printf("error initalizing session from request: %v\n", err)
+	}
+	c.Set("session", s)
+	c.Next()
 }
 
 // Close closes the connection to the store.
@@ -66,18 +56,19 @@ func getSession(s *store, r *http.Request, w http.ResponseWriter) (*Session, err
 func createSession(s *store, w http.ResponseWriter) (*Session, error) {
 	sessionID := uuid.NewV4().String()
 
-	c := &http.Cookie{
-		Name:   cookey,
-		Value:  sessionID,
-		MaxAge: int(lifespan.Seconds()),
-	}
-
 	err := s.create(sessionID)
 	if err != nil {
 		return nil, err
 	}
 
+	c := &http.Cookie{
+		Name:   cookey,
+		Value:  sessionID,
+		Path:   "/",
+		MaxAge: int(lifespan.Seconds()),
+	}
 	http.SetCookie(w, c)
+
 	return &Session{
 		id:    sessionID,
 		store: s,

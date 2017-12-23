@@ -39,7 +39,3 @@ func (s *Session) Set(key, value string) error {
 func (s *Session) ID() string {
 	return s.id
 }
-
-func (s *Session) String() string {
-	return fmt.Sprintf("sessionID: %v", s.id)
-}

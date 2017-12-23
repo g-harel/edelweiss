@@ -1,53 +1,49 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
+	"log"
+	"os"
+	"time"
 
-	"github.com/g-harel/edelweiss/internal/models"
-	"github.com/julienschmidt/httprouter"
+	"github.com/g-harel/edelweiss/internal/session"
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
-func sendJSON(res interface{}, err error) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err)
-			return
-		}
-		b, err := json.Marshal(res)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err)
-			return
-		}
-		fmt.Fprintf(w, string(b))
-	}
-}
-
 func main() {
-	db, err := models.Init()
-	defer db.Close()
+	r := gin.New()
+
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+
+	sm, err := session.NewManager()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+	defer sm.Close()
+	r.Use(sm.Middleware)
 
-	router := httprouter.New()
+	r.GET("/", func(c *gin.Context) {
+		val, _ := c.Get("session")
+		s := val.(*session.Session)
 
-	users := models.Users{DB: db}
-	domains := models.Domains{DB: db}
+		sessionID, err := s.Get("id")
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	router.GET("/api/users", sendJSON(users.ReadAll()))
+		c.JSON(200, gin.H{
+			"message": sessionID,
+		})
+	})
 
-	router.GET("/api/domains", sendJSON(domains.ReadAll()))
+	r.GET("/e", func(c *gin.Context) {
+		c.Redirect(301, "/")
+		go func() {
+			time.Sleep(time.Millisecond * 200)
+			go os.Exit(0)
+		}()
+	})
 
-	http.ListenAndServe(":8080", sessions.Middleware()(router))
+	r.Run()
 }
