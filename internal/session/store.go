@@ -1,6 +1,8 @@
 package session
 
 import (
+	"fmt"
+
 	"github.com/go-redis/redis"
 )
 
@@ -39,7 +41,10 @@ func (s *store) delete(id string) error {
 }
 
 func (s *store) touch(id string) error {
-	_, err := s.client.Expire(id, lifespan).Result()
+	val, err := s.client.Expire(id, lifespan).Result()
+	if val != true {
+		return fmt.Errorf("session could not be found in store")
+	}
 	return err
 }
 

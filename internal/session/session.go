@@ -11,28 +11,28 @@ type sessionStorer interface {
 
 // Session contains identifying information about the user.
 type Session struct {
-	id    string
-	store sessionStorer
+	id         string
+	store      sessionStorer
+	errHandler errHandler
 }
 
 // Get fetches session data.
-func (s *Session) Get(key string) (string, error) {
+func (s *Session) Get(key string) string {
 	val, err := s.store.get(s.id, key)
 	if err != nil {
-		return val, fmt.Errorf("error reading from store: %v", err)
+		s.errHandler(fmt.Errorf("error reading from store: %v", err))
+		return ""
 	}
 
-	return val, nil
+	return val
 }
 
 // Set modifies session data.
-func (s *Session) Set(key, value string) error {
+func (s *Session) Set(key, value string) {
 	err := s.store.set(s.id, key, value)
 	if err != nil {
-		return fmt.Errorf("error setting value in store: %v", err)
+		s.errHandler(fmt.Errorf("error setting value in store: %v", err))
 	}
-
-	return nil
 }
 
 // ID is a getter for the session's id property.

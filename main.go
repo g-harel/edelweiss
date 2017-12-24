@@ -24,13 +24,9 @@ func main() {
 	r.Use(sm.Middleware)
 
 	r.GET("/", func(c *gin.Context) {
-		val, _ := c.Get("session")
-		s := val.(*session.Session)
+		s := sm.Load(c)
 
-		sessionID, err := s.Get("id")
-		if err != nil {
-			log.Fatal(err)
-		}
+		sessionID := s.Get("id")
 
 		c.JSON(200, gin.H{
 			"message": sessionID,

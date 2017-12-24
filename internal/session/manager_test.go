@@ -1,13 +1,12 @@
 package session
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 )
 
 func TestManager(t *testing.T) {
@@ -15,16 +14,22 @@ func TestManager(t *testing.T) {
 
 	t.Run("Middleware", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		sessionID := "1234-abcd"
 
-		r1 := httptest.NewRequest("GET", "/", nil)
-		r1.AddCookie(&http.Cookie{
+		router := gin.Default()
+		router.Use(m.Middleware)
+
+		sessionID := "1234-abcd"
+		req1, _ := http.NewRequest("GET", "/req1", nil)
+		req1.AddCookie(&http.Cookie{
 			Name:  cookey,
 			Value: sessionID,
 		})
-		m.store.set(sessionID, "id", sessionID)
-		h1 := httprouter.Handle(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-			s := m.Load(r)
+		err := m.store.set(sessionID, "id", sessionID)
+		if err != nil {
+			t.Errorf("could not set value in session store")
+		}
+		router.GET("/req1", func(c *gin.Context) {
+			s := m.Load(c)
 			if s.id != sessionID {
 				t.Errorf("session should be read from request cookies")
 			}
@@ -36,15 +41,15 @@ func TestManager(t *testing.T) {
 				t.Errorf("existing session ttl should be reset")
 			}
 		})
-		m.Middleware(h1)(w, r1, httprouter.Params{})
+		router.ServeHTTP(w, req1)
 
-		r2 := httptest.NewRequest("GET", "/", nil)
-		h2 := httprouter.Handle(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-			s := m.Load(r)
+		req2, _ := http.NewRequest("GET", "/req2", nil)
+		router.GET("/req2", func(c *gin.Context) {
+			s := m.Load(c)
 			if s == nil {
 				t.Errorf("session should be created when not in cookies")
 			}
-			val, err := m.store.client.Exists(sessionID).Result()
+			val, err := m.store.client.Exists(s.id).Result()
 			if err != nil {
 				t.Errorf("could not check session store client")
 			}
@@ -56,24 +61,25 @@ func TestManager(t *testing.T) {
 				t.Errorf("set-cookie header was not added to response")
 			}
 		})
-		m.Middleware(h2)(w, r2, httprouter.Params{})
+		router.ServeHTTP(w, req2)
 	})
 
 	t.Run("Load", func(t *testing.T) {
-		r := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
 
-		s := m.Load(r)
-		if s != nil {
+		c, _ := gin.CreateTestContext(w)
+		s1 := m.Load(c)
+		if s1 != nil {
 			t.Errorf("load should return nil when no session is set")
 		}
 
-		s1 := &Session{
+		s2 := &Session{
 			id:    "abcd-1234",
 			store: m.store,
 		}
-		r = r.WithContext(context.WithValue(r.Context(), &cookey, s1))
-		s2 := m.Load(r)
-		if s1 != s2 {
+		c.Set("session", s2)
+		s3 := m.Load(c)
+		if s2 != s3 {
 			t.Fatalf("load should fetch the stored session")
 		}
 	})
