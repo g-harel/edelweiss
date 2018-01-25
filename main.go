@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/g-harel/edelweiss/internal/session"
@@ -11,29 +12,40 @@ import (
 )
 
 func main() {
-	r := gin.New()
-
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
 	sm, err := session.NewManager()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer sm.Close()
-	r.Use(sm.Middleware)
 
-	r.GET("/", func(c *gin.Context) {
+	router := gin.New()
+
+	router.Use(
+		gin.Logger(),
+		gin.Recovery(),
+		sm.Middleware,
+	)
+
+	router.GET("/", func(c *gin.Context) {
 		s := sm.Load(c)
 
 		sessionID := s.Get("id")
 
+		visits := s.Get("visits")
+		v, err := strconv.Atoi(visits)
+		if err != nil {
+			v = 0
+		}
+		v++
+		s.Set("visits", strconv.Itoa(v))
+
 		c.JSON(200, gin.H{
 			"message": sessionID,
+			"visits":  v,
 		})
 	})
 
-	r.GET("/e", func(c *gin.Context) {
+	router.GET("/e", func(c *gin.Context) {
 		c.Redirect(301, "/")
 		go func() {
 			time.Sleep(time.Millisecond * 200)
@@ -41,5 +53,5 @@ func main() {
 		}()
 	})
 
-	r.Run()
+	router.Run()
 }

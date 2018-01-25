@@ -20,7 +20,6 @@ type Session struct {
 func (s *Session) Get(key string) string {
 	val, err := s.store.get(s.id, key)
 	if err != nil {
-		s.errHandler(fmt.Errorf("error reading from store: %v", err))
 		return ""
 	}
 
