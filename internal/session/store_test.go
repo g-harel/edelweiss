@@ -1,12 +1,52 @@
 package session
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/go-redis/redis"
+)
+
+type MockStore map[string]map[string]string
+
+func (m MockStore) create(id string) error {
+	return m.set(id, "id", id)
+}
+
+func (m MockStore) delete(id string) error {
+	m[id] = nil
+	return nil
+}
+
+func (m MockStore) touch(id string) error {
+	return nil
+}
+
+func (m MockStore) get(id, key string) (string, error) {
+	d := m[id][key]
+	return d, nil
+}
+
+func (m MockStore) set(id, key, value string) error {
+	if m[id] == nil {
+		m[id] = make(map[string]string)
+	}
+	m[id][key] = value
+	return nil
+}
 
 func TestStore(t *testing.T) {
-	s, err := newStore()
+	c := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "password123",
+		DB:       0,
+	})
+
+	_, err := c.Ping().Result()
 	if err != nil {
 		t.Fatalf("could not create new store: %v", err)
 	}
+
+	s := &store{c}
 
 	t.Run("create", func(t *testing.T) {
 		sessionID := "1234-abcd"

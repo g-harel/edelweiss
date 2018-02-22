@@ -6,32 +6,42 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// Store interface represents a two layer hash map.
+type Store interface {
+	create(id string) error
+	touch(id string) error
+	delete(id string) error
+	get(id, key string) (string, error)
+	set(id, key, value string) error
+}
+
 type store struct {
 	client *redis.Client
 }
 
-func newStore() (*store, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "192.168.99.100:6379",
-		Password: "password123",
+// NewStore creates a new session store backed by a redis client.
+func NewStore(addr, pass string) (Store, error) {
+	c := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: pass,
 		DB:       0,
 	})
 
-	_, err := client.Ping().Result()
+	_, err := c.Ping().Result()
 	if err != nil {
 		return nil, err
 	}
 
-	return &store{client}, nil
+	return &store{c}, nil
 }
 
 func (s *store) create(id string) error {
-	pipe := s.client.Pipeline()
+	p := s.client.Pipeline()
 
-	pipe.HMSet(id, map[string]interface{}{"id": id})
-	pipe.Expire(id, lifespan)
+	p.HMSet(id, map[string]interface{}{"id": id})
+	p.Expire(id, lifespan)
 
-	_, err := pipe.Exec()
+	_, err := p.Exec()
 	return err
 }
 
@@ -41,9 +51,9 @@ func (s *store) delete(id string) error {
 }
 
 func (s *store) touch(id string) error {
-	val, err := s.client.Expire(id, lifespan).Result()
-	if val != true {
-		return fmt.Errorf("session could not be found in store")
+	v, err := s.client.Expire(id, lifespan).Result()
+	if !v {
+		return fmt.Errorf("id could not be found in store")
 	}
 	return err
 }
@@ -55,8 +65,4 @@ func (s *store) get(id, key string) (string, error) {
 func (s *store) set(id, key, value string) error {
 	_, err := s.client.HSet(id, key, value).Result()
 	return err
-}
-
-func (s *store) close() error {
-	return s.client.Close()
 }

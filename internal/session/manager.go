@@ -6,107 +6,82 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
-var cookey = "session"
+var cooKey = "session"
+var contextKey = "session"
 
 var lifespan = time.Hour * 24 * 14
 
-type errHandler func(error)
-
 // Manager manages sessions.
 type Manager struct {
-	store *store
+	store Store
 }
 
-// NewManager creates a new Manager.
-func NewManager() (*Manager, error) {
-	s, err := newStore()
+// NewManager creates a new session manager.
+func NewManager(s Store) *Manager {
+	return &Manager{s}
+}
+
+// Load fetches or creates the session from the request context.
+func (m *Manager) Load(c *gin.Context) (*Session, error) {
+	val, exists := c.Get(contextKey)
+	if exists {
+		s, ok := val.(*Session)
+		if !ok {
+			return nil, fmt.Errorf("session could not be created from context value")
+		}
+		return s, nil
+	}
+
+	var s *Session
+
+	ck, err := c.Request.Cookie(cooKey)
+	if err != nil {
+		s, err = m.createSession(c.Writer)
+	} else {
+		s, err = m.findSession(ck.Value)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &Manager{s}, nil
+	c.Set(contextKey, s)
+
+	return s, nil
 }
 
-// Close closes the connection to the store.
-func (m *Manager) Close() error {
-	return m.store.close()
-}
-
-// Middleware creates a middlware function which adds session info to the request context.
-func (m *Manager) Middleware(c *gin.Context) {
-	e := errHandler(func(err error) {
-		handleErr(c, err)
-	})
-	s := getSession(m, c.Request, c.Writer, e)
-	c.Set("session", s)
-	c.Next()
-}
-
-// Load fetches the session from the request context.
-func (m *Manager) Load(c *gin.Context) *Session {
-	val, exists := c.Get("session")
-	if exists == false {
-		handleErr(c, fmt.Errorf("session was not found in context"))
-		return nil
-	}
-	s, ok := val.(*Session)
-	if ok != true {
-		handleErr(c, fmt.Errorf("session could not be created from context value"))
-		return nil
-	}
-	return s
-}
-
-func handleErr(c *gin.Context, err error) {
-	c.AbortWithError(500, err)
-}
-
-// find or create a session for the current request.
-func getSession(m *Manager, r *http.Request, w http.ResponseWriter, e errHandler) *Session {
-	cookie, foundErr := r.Cookie(cookey)
-	if foundErr != nil {
-		return createSession(m, w, e)
-	}
-
-	return findSession(m, cookie.Value, e)
-}
-
-func createSession(m *Manager, w http.ResponseWriter, e errHandler) *Session {
+func (m *Manager) createSession(w http.ResponseWriter) (*Session, error) {
 	sessionID := uuid.NewV4().String()
 
 	err := m.store.create(sessionID)
 	if err != nil {
-		e(err)
+		return nil, err
 	}
 
-	cookie := &http.Cookie{
-		Name:     cookey,
+	http.SetCookie(w, &http.Cookie{
+		Name:     cooKey,
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
 		MaxAge:   int(lifespan.Seconds()),
-	}
-	http.SetCookie(w, cookie)
+	})
 
 	return &Session{
-		id:         sessionID,
-		store:      m.store,
-		errHandler: e,
-	}
+		id:    sessionID,
+		store: m.store,
+	}, nil
 }
 
-func findSession(m *Manager, id string, e errHandler) *Session {
+func (m *Manager) findSession(id string) (*Session, error) {
 	err := m.store.touch(id)
 	if err != nil {
-		e(err)
+		return nil, err
 	}
 
 	return &Session{
-		id:         id,
-		store:      m.store,
-		errHandler: e,
-	}
+		id:    id,
+		store: m.store,
+	}, nil
 }

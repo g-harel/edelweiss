@@ -2,9 +2,7 @@ package main
 
 import (
 	"log"
-	"os"
 	"strconv"
-	"time"
 
 	"github.com/g-harel/edelweiss/internal/session"
 	"github.com/gin-gonic/gin"
@@ -12,26 +10,35 @@ import (
 )
 
 func main() {
-	sm, err := session.NewManager()
+	ss, err := session.NewStore("localhost:6379", "password123")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer sm.Close()
+	sm := session.NewManager(ss)
 
 	router := gin.New()
 
 	router.Use(
 		gin.Logger(),
 		gin.Recovery(),
-		sm.Middleware,
 	)
 
 	router.GET("/", func(c *gin.Context) {
-		s := sm.Load(c)
+		s, err := sm.Load(c)
+		if err != nil {
+			panic(err)
+		}
 
-		sessionID := s.Get("id")
+		sessionID, err := s.Get("id")
+		if err != nil {
+			panic(err)
+		}
 
-		visits := s.Get("visits")
+		visits, err := s.Get("visits")
+		if err != nil {
+			panic(err)
+		}
+
 		v, err := strconv.Atoi(visits)
 		if err != nil {
 			v = 0
@@ -43,14 +50,6 @@ func main() {
 			"message": sessionID,
 			"visits":  v,
 		})
-	})
-
-	router.GET("/e", func(c *gin.Context) {
-		c.Redirect(301, "/")
-		go func() {
-			time.Sleep(time.Millisecond * 200)
-			go os.Exit(0)
-		}()
 	})
 
 	router.Run()
