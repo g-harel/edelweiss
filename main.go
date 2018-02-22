@@ -4,6 +4,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/g-harel/edelweiss/internal/database"
 	"github.com/g-harel/edelweiss/internal/session"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -15,6 +16,18 @@ func main() {
 		log.Fatal(err)
 	}
 	sm := session.NewManager(ss)
+
+	_, err = database.New(`
+		host=localhost
+		port=5432
+		user=postgres
+		password=password123
+		dbname=edelweiss
+		sslmode=disable
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	router := gin.New()
 
@@ -34,11 +47,7 @@ func main() {
 			panic(err)
 		}
 
-		visits, err := s.Get("visits")
-		if err != nil {
-			panic(err)
-		}
-
+		visits, _ := s.Get("visits")
 		v, err := strconv.Atoi(visits)
 		if err != nil {
 			v = 0

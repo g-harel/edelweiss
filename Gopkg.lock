@@ -53,6 +53,15 @@
   version = "v0.0.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/rubenv/sql-migrate"
+  packages = [
+    ".",
+    "sqlparse"
+  ]
+  revision = "081fe17d19ff4e2dd9f5a0c1158e6bcf74da6906"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -77,6 +86,12 @@
   version = "v8.18.2"
 
 [[projects]]
+  name = "gopkg.in/gorp.v1"
+  packages = ["."]
+  revision = "c87af80f3cc5036b55b83d77171e156791085e2e"
+  version = "v1.7.1"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -85,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "249fecc58b892266123ec3163e7a5581265c6f3d30678ba8d82155ccf3ab4c26"
+  inputs-digest = "9dfd9401c27d30d8f73d45b9c5d1fd9ccb04e920421b740ecb669ab5d6a03098"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,3 +10,7 @@
 [[constraint]]
   name = "github.com/go-redis/redis"
   version = "6.7.5"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/rubenv/sql-migrate"
