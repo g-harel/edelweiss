@@ -11,6 +11,15 @@ services:
       - POSTGRES_PASSWORD=password123
       - POSTGRES_DB=edelweiss
 
+  pgadmin:
+    image: fenglc/pgadmin4
+    container_name: pgadmin
+    ports:
+      - "5050:5050"
+    environment:
+      - DEFAULT_USER=pgadmin4@pgadmin.org
+      - DEFAULT_PASSWORD=admin
+
   redis:
     image: redis
     container_name: redis
