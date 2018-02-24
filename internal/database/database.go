@@ -23,6 +23,11 @@ func New(dataSource string) (*sql.DB, error) {
 		Dir: "internal/database/migrations",
 	}
 	migrate.SetTable("migrations")
+	// for development. re-creates db every restart
+	m, err := migrate.Exec(db, "postgres", migrations, migrate.Down)
+	if err == nil {
+		fmt.Printf("Downed %d migrations!\n", m)
+	}
 	n, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
 	if err != nil {
 		return nil, err

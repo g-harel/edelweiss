@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/g-harel/edelweiss/internal/database"
+	"github.com/g-harel/edelweiss/internal/database/model"
 	"github.com/g-harel/edelweiss/internal/session"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -17,7 +18,7 @@ func main() {
 	}
 	sm := session.NewManager(ss)
 
-	_, err = database.New(`
+	d, err := database.New(`
 		host=localhost
 		port=5432
 		user=postgres
@@ -28,6 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	_ = model.New(d)
 
 	router := gin.New()
 
