@@ -5,11 +5,11 @@ import (
 	"regexp"
 )
 
-var ValidEmailRegExp = "^(?=[^]{,60}$)[^]+@[^]+\\.[^]+$"
-var ValidPasswordRegExp = "^[^]{8,60}$"
-
-func validateEmail(e string) error {
-	matched, err := regexp.Match(ValidEmailRegExp, []byte(e))
+func ValidateEmail(e string) error {
+	if len(e) > 60 {
+		return errors.New("Email address is too long")
+	}
+	matched, err := regexp.Match("^.+@.+\\..+$", []byte(e))
 	if err != nil {
 		return err
 	}
@@ -19,12 +19,8 @@ func validateEmail(e string) error {
 	return nil
 }
 
-func validatePassword(p string) error {
-	matched, err := regexp.Match(ValidPasswordRegExp, []byte(p))
-	if err != nil {
-		return err
-	}
-	if !matched {
+func ValidatePassword(p string) error {
+	if len(p) < 8 || len(p) > 60 {
 		return errors.New("Password length is invalid (8-60)")
 	}
 	return nil

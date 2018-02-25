@@ -19,14 +19,16 @@ func New(dataSource string) (*sql.DB, error) {
 		return nil, err
 	}
 
+	// for development. re-creates db every restart
 	migrations := &migrate.FileMigrationSource{
 		Dir: "internal/database/migrations",
 	}
 	migrate.SetTable("migrations")
-	// for development. re-creates db every restart
-	m, err := migrate.Exec(db, "postgres", migrations, migrate.Down)
-	if err == nil {
-		fmt.Printf("Downed %d migrations!\n", m)
+	if true {
+		m, err := migrate.Exec(db, "postgres", migrations, migrate.Down)
+		if err == nil {
+			fmt.Printf("Downed %d migrations!\n", m)
+		}
 	}
 	n, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
 	if err != nil {

@@ -4,12 +4,12 @@ import "database/sql"
 
 // Model represents the database model and contains table queries.
 type Model struct {
-	Users *Users
+	Users Users
 }
 
 // New creates a new model instance.
 func New(db *sql.DB) *Model {
 	return &Model{
-		Users: &Users{db},
+		Users: &users{db},
 	}
 }

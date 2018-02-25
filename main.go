@@ -29,7 +29,28 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = model.New(d)
+	m := model.New(d)
+
+	usr, err := m.Users.Add("test@gmail.com", "tomato123")
+	if err != nil {
+		panic(err)
+	}
+	_, err = m.Users.Authenticate(usr.Email, "tomato123")
+	if err != nil {
+		panic(err)
+	}
+	err = m.Users.ChangeHash(usr.Email, "tomato123", "orange123")
+	if err != nil {
+		panic(err)
+	}
+	_, err = m.Users.Authenticate(usr.Email, "orange123")
+	if err != nil {
+		panic(err)
+	}
+	err = m.Users.ChangeVerified(usr.Email, true)
+	if err != nil {
+		panic(err)
+	}
 
 	router := gin.New()
 
