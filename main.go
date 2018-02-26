@@ -47,7 +47,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = m.Users.ChangeVerified(usr.Email, true)
+	err = m.Users.ChangeVerified(usr.UUID, true)
 	if err != nil {
 		panic(err)
 	}

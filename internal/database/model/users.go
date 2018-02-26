@@ -20,7 +20,7 @@ type User struct {
 type Users interface {
 	Add(email, password string) (*User, error)
 	Authenticate(email, password string) (*User, error)
-	ChangeVerified(email string, value bool) error
+	ChangeVerified(uuid string, value bool) error
 	ChangeHash(email, password, newPassword string) error
 }
 
@@ -119,18 +119,18 @@ func (u *users) ChangeHash(e, p, n string) error {
 	return err
 }
 
-func (u *users) ChangeVerified(e string, v bool) error {
+func (u *users) ChangeVerified(id string, v bool) error {
 	stmt, err := u.db.Prepare(`
 		UPDATE users
 		SET    verified=$1
-		WHERE  email=$2;
+		WHERE  uuid=$2;
 	`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(v, e)
+	_, err = stmt.Exec(v, id)
 	return err
 }
 
