@@ -42,12 +42,37 @@ func (m *Manager) Load(c *gin.Context) (*Session, error) {
 		s, err = m.createSession(c.Writer)
 	} else {
 		s, err = m.findSession(ck.Value)
+		if err != nil {
+			s, err = m.createSession(c.Writer)
+		}
 	}
 	if err != nil {
 		return nil, err
 	}
 
 	c.Set(contextKey, s)
+
+	return s, nil
+}
+
+// Refresh erases the current session and starts a blank one.
+// A session should always exist, so it is replace instead of
+// just being destroyed.
+func (m *Manager) Refresh(c *gin.Context) (*Session, error) {
+	s, err := m.createSession(c.Writer)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Set(contextKey, s)
+
+	// Session data also deleted from store if found. An error in
+	// fetching the cookie key is not a deal-breaker since the store
+	// data will eventually expire.
+	ck, err := c.Request.Cookie(cooKey)
+	if err == nil {
+		m.store.delete(ck.Value)
+	}
 
 	return s, nil
 }
