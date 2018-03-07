@@ -4,9 +4,9 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/g-harel/edelweiss/internal/database"
-	"github.com/g-harel/edelweiss/internal/database/model"
-	"github.com/g-harel/edelweiss/internal/session"
+	"github.com/g-harel/edelweiss/services/gateway/database"
+	"github.com/g-harel/edelweiss/services/gateway/database/model"
+	"github.com/g-harel/edelweiss/services/gateway/session"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )

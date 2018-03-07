@@ -3,7 +3,7 @@ package model
 import (
 	"database/sql"
 
-	"github.com/g-harel/edelweiss/internal/database"
+	"github.com/g-harel/edelweiss/services/gateway/database"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )

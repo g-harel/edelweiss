@@ -21,7 +21,7 @@ func New(dataSource string) (*sql.DB, error) {
 
 	// for development. re-creates db every restart
 	migrations := &migrate.FileMigrationSource{
-		Dir: "internal/database/migrations",
+		Dir: "services/gateway/database/migrations",
 	}
 	migrate.SetTable("migrations")
 	if true {

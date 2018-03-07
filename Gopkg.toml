@@ -14,3 +14,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/rubenv/sql-migrate"
+
+[[constraint]]
+  name = "github.com/micro/go-micro"
+  version = "0.5.0"

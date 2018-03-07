@@ -67,4 +67,6 @@ func TestManager(t *testing.T) {
 			}
 		})
 	})
+
+	// TODO test refresh
 }

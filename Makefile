@@ -3,7 +3,7 @@ install:
 
 run:
 	@ docker-compose up -d
-	@ go run main.go
+	@ go run ./services/gateway/main.go
 
 test:
 	@ go test -race ./...
