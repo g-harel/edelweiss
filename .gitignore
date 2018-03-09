@@ -6,3 +6,4 @@
 *.out
 .glide/
 vendor/
+_*/
