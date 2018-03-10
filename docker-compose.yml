@@ -26,3 +26,15 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --requirepass password123
+
+  gateway:
+    image: ubuntu
+    container_name: gateway
+    volumes:
+      - ./build:/src
+    command: /src/gateway
+    depends_on:
+      - "redis"
+      - "psql"
+    ports:
+      - "8080:8080"

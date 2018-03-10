@@ -12,14 +12,14 @@ import (
 )
 
 func main() {
-	ss, err := session.NewStore("localhost:6379", "password123")
+	ss, err := session.NewStore("redis:6379", "password123")
 	if err != nil {
 		log.Fatal(err)
 	}
 	sm := session.NewManager(ss)
 
 	d, err := database.New(`
-		host=localhost
+		host=psql
 		port=5432
 		user=postgres
 		password=password123
