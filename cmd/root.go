@@ -3,35 +3,49 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
-func run(command string, args ...string) (string, error) {
+var verbose *bool
+
+func run(command string, args ...string) (stdout, stderr string, err error) {
 	cmd := exec.Command(command, args...)
 
-	stdout, err := cmd.StdoutPipe()
+	if *verbose {
+		color.Yellow("running: %v %v", command, strings.Join(args, " "))
+	}
+
+	outp, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", err
+		return "", "", err
+	}
+
+	errp, err := cmd.StderrPipe()
+	if err != nil {
+		return "", "", err
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	b := new(bytes.Buffer)
-	b.ReadFrom(stdout)
+	bo := new(bytes.Buffer)
+	bo.ReadFrom(outp)
+
+	be := new(bytes.Buffer)
+	be.ReadFrom(errp)
 
 	err = cmd.Wait()
 	if err != nil {
-		return "", nil
+		return "", "", nil
 	}
 
-	return b.String(), nil
+	return bo.String(), bo.String(), nil
 }
 
 var rootCmd = &cobra.Command{
@@ -41,24 +55,14 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-var checkCmd = &cobra.Command{
-	Use: "check",
-	Run: func(cmd *cobra.Command, args []string) {
-		commands := []string{"go", "dep", "kubectl", "minikube"}
-		for _, c := range commands {
-			_, err := run(c)
-			if err != nil {
-				color.Red("\ndependency missing: %v\n\n", err)
-				os.Exit(1)
-			}
-		}
-		color.Green("\n✓ all dependencies located\n\n")
-	},
+func init() {
+	verbose = rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output and logging")
 }
 
 // Execute executes the root command.
 func Execute() {
 	rootCmd.AddCommand(checkCmd)
+	rootCmd.AddCommand(installCmd)
 
 	rootCmd.Execute()
 }
