@@ -11,22 +11,22 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install packages in vendor directory using dep tool.",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		check("dep")
+		check(DEP)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var verboseFlag string
-		if *verbose {
+		if *VERBOSE {
 			verboseFlag = "-v"
 		}
-		o, e, err := run("dep", "ensure", verboseFlag)
+		o, e, err := run(DEP, "ensure", verboseFlag)
 		if err != nil {
 			color.Red("\ninstall failed: %v\n\n", err)
-			if *verbose {
+			if *VERBOSE {
 				color.Red(e)
 			}
 			os.Exit(1)
 		}
-		if *verbose {
+		if *VERBOSE {
 			color.White(o)
 		}
 		color.Green("\n✓ packages installed\n\n")

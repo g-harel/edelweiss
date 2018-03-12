@@ -21,7 +21,7 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Make sure all executable dependencies are in the path.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := check("go", "dep", "kubectl", "minikube")
+		err := check(GO, DEP, KUBECTL, MINIKUBE)
 		if err != nil {
 			color.Red("\ndependency missing: %v\n\n", err)
 			os.Exit(1)

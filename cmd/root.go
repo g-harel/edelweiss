@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -10,12 +11,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var verbose *bool
+// executable dependencies
+const (
+	GO       = "go"
+	DEP      = "dep"
+	MINIKUBE = "minikube"
+	KUBECTL  = "kubectl"
+)
+
+// global flags
+var (
+	VERBOSE *bool
+	WORKDIR *string
+)
 
 func run(command string, args ...string) (stdout, stderr string, err error) {
 	cmd := exec.Command(command, args...)
 
-	if *verbose {
+	if *VERBOSE {
 		color.Yellow("running: %v %v", command, strings.Join(args, " "))
 	}
 
@@ -56,13 +69,20 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	verbose = rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output and logging")
+	dir, err := os.Getwd()
+	if err != nil {
+		color.Red("\nCould not locate working directory: %v\n\n", err)
+	}
+
+	VERBOSE = rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output and logging")
+	WORKDIR = rootCmd.PersistentFlags().StringP("workdir", "w", dir, "define working directory")
 }
 
 // Execute executes the root command.
 func Execute() {
 	rootCmd.AddCommand(checkCmd)
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(testCmd)
 
 	rootCmd.Execute()
 }
