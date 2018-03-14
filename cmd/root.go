@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -25,46 +23,24 @@ var (
 	WORKDIR *string
 )
 
-func run(command string, args ...string) (stdout, stderr string, err error) {
-	cmd := exec.Command(command, args...)
-
+func run(command string, args ...string) (string, error) {
 	if *VERBOSE {
 		color.Yellow("running: %v %v", command, strings.Join(args, " "))
 	}
 
-	outp, err := cmd.StdoutPipe()
-	if err != nil {
-		return "", "", err
+	b, err := exec.Command(command, args...).CombinedOutput()
+
+	if *VERBOSE {
+		color.White("%s\n", b)
 	}
 
-	errp, err := cmd.StderrPipe()
-	if err != nil {
-		return "", "", err
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return "", "", err
-	}
-
-	bo := new(bytes.Buffer)
-	bo.ReadFrom(outp)
-
-	be := new(bytes.Buffer)
-	be.ReadFrom(errp)
-
-	err = cmd.Wait()
-	if err != nil {
-		return "", "", nil
-	}
-
-	return bo.String(), bo.String(), nil
+	return string(b), err
 }
 
 var rootCmd = &cobra.Command{
 	Use: "edelweiss",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Hello World!")
+		color.HiWhite("Hello World!")
 	},
 }
 
