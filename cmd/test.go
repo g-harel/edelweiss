@@ -20,18 +20,21 @@ var testCmd = &cobra.Command{
 		if len(args) > 0 {
 			dirs = make([]string, len(args))
 			for i, s := range args {
-				dirs[i] = path.Join(*WORKDIR, "/services", s, "/...")
+				dirs[i] = path.Join("./services", s)
 			}
 		}
 
-		var v string
+		a := []string{"test", "./...", "-race"}
 		if *VERBOSE {
-			v = "-v"
+			a = append(a, "-v")
 		}
 
 		for _, d := range dirs {
-			_, err := run(GO, "test", "-race", v, d)
+			o, err := run(GO, append(a, d)...)
 			if err != nil {
+				if !*VERBOSE {
+					color.White(o)
+				}
 				color.Red("\ntest failed: %v\n\n", err)
 				os.Exit(1)
 			}

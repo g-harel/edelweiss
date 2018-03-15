@@ -15,6 +15,10 @@ func checkFatal(commands ...string) {
 			color.Red("\ncheckFatal: %s\n(If you are on windows, executables must have a file extension to be found)\n\n", err)
 			os.Exit(1)
 		}
+
+		if *VERBOSE {
+			color.White("found %s", c)
+		}
 	}
 }
 

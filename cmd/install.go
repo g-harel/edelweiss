@@ -14,12 +14,12 @@ var installCmd = &cobra.Command{
 		checkFatal(DEP)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		var v string
+		a := []string{"ensure"}
 		if *VERBOSE {
-			v = "-v"
+			a = append(a, "-v")
 		}
 
-		_, err := run(DEP, "ensure", v)
+		_, err := run(DEP, a...)
 		if err != nil {
 			color.Red("\ninstall failed: %v\n\n", err)
 			os.Exit(1)
