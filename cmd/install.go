@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -20,10 +18,8 @@ var installCmd = &cobra.Command{
 		}
 
 		_, err := run(DEP, a...)
-		if err != nil {
-			color.Red("\ninstall failed: %v\n\n", err)
-			os.Exit(1)
-		}
+		fatal(err)("install failed")
+
 		color.Green("\n✓ packages installed\n\n")
 	},
 }

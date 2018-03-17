@@ -30,11 +30,9 @@ var testCmd = &cobra.Command{
 		}
 
 		for _, d := range dirs {
-			o, err := run(GO, append(a, d)...)
+			out, err := run(GO, append(a, d)...)
 			if err != nil {
-				if !*VERBOSE {
-					color.White(o)
-				}
+				log(color.White, out)
 				color.Red("\ntest failed: %v\n\n", err)
 				os.Exit(1)
 			}
