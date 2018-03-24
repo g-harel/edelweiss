@@ -17,19 +17,25 @@ var rookCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		repoName := "rook-master"
 
-		out, err := run("helm", "repo", "list")
+		// check that rook repo is registered with helm
+		out, err := run(HELM, "repo", "list")
 		fatal(err)("Could not query helm repos")
 		found := strings.Index(out, repoName) > 0
 		if !found {
-			_, err := run("helm", "repo", "add", repoName, "https://charts.rook.io/master")
+			_, err := run(HELM, "repo", "add", repoName, "https://charts.rook.io/master")
 			fatal(err)("Could not add rook repo")
 		}
 
-		out, err = run("helm", "init", "--upgrade")
-		fatal(err)("Could not init helm in cluster")
+		// check that kubectl points to a running cluster.
+		out, err = run(KUBECTL, "cluster-info")
+		fatal(err)("Could not connect to cluster")
 
+		// initalize helm in the cluster
+		out, err = run(HELM, "init", "--upgrade")
+		fatal(err)("Could not init helm in cluster")
+		time.Sleep(time.Second)
 		for {
-			out, err = run("kubectl", "get", "pods",
+			out, err = run(KUBECTL, "get", "pods",
 				"--all-namespaces",
 				"--selector=name=tiller",
 				"--output=jsonpath={.items[0].status.phase}",
@@ -41,8 +47,10 @@ var rookCmd = &cobra.Command{
 			color.White("Waiting for Tiller pod, status: %v", out)
 			time.Sleep(time.Second * 3)
 		}
+		time.Sleep(time.Second)
 
-		out, err = run("helm", "install", repoName+"/rook",
+		// install rook in the cluster with helm
+		out, err = run(HELM, "install", repoName+"/rook",
 			"--name", "rook",
 			"--namespace", "kube-system",
 			"--version", "v0.7.0-27.gbfc8ec6",

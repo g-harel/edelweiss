@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"path"
 
 	"github.com/fatih/color"
@@ -30,12 +29,8 @@ var testCmd = &cobra.Command{
 		}
 
 		for _, d := range dirs {
-			out, err := run(GO, append(a, d)...)
-			if err != nil {
-				log(color.White, out)
-				color.Red("\ntest failed: %v\n\n", err)
-				os.Exit(1)
-			}
+			_, err := run(GO, append(a, d)...)
+			fatal(err)("test failed")
 		}
 		color.Green("\n✓ tests passed\n\n")
 	},

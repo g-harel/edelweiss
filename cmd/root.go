@@ -26,7 +26,7 @@ var (
 )
 
 func run(command string, args ...string) (string, error) {
-	log(color.Yellow, "running: %v %v", command, strings.Join(args, " "))
+	log(color.Yellow, "$ %v %v", command, strings.Join(args, " "))
 	b, err := exec.Command(command, args...).CombinedOutput()
 	log(color.White, "%s\n", b)
 	return string(b), err
