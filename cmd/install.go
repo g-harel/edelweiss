@@ -17,6 +17,7 @@ var installCmd = &cobra.Command{
 			a = append(a, "-v")
 		}
 
+		log("Installing/updating dependencies")
 		_, err := run(DEP, a...)
 		fatal(err)("install failed")
 

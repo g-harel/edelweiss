@@ -26,9 +26,9 @@ var (
 )
 
 func run(command string, args ...string) (string, error) {
-	log(color.Yellow, "$ %v %v", command, strings.Join(args, " "))
+	verboseLog(color.Yellow, "$ %v %v", command, strings.Join(args, " "))
 	b, err := exec.Command(command, args...).CombinedOutput()
-	log(color.White, "%s\n", b)
+	verboseLog(color.White, "%s\n", b)
 	return string(b), err
 }
 
@@ -41,10 +41,15 @@ func fatal(err error) func(format string, args ...interface{}) {
 	}
 }
 
-func log(f func(string, ...interface{}), format string, args ...interface{}) {
+func verboseLog(f func(string, ...interface{}), format string, args ...interface{}) {
 	if *VERBOSE {
 		f(format, args...)
 	}
+}
+
+func log(format string, args ...interface{}) {
+	color.New(color.Bold, color.FgHiBlue).Printf("> ")
+	color.White("%s...\n", fmt.Sprintf(format, args...))
 }
 
 var rootCmd = &cobra.Command{

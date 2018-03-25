@@ -29,8 +29,9 @@ var testCmd = &cobra.Command{
 		}
 
 		for _, d := range dirs {
-			_, err := run(GO, append(a, d)...)
-			fatal(err)("test failed")
+			log("Running tests in \"%v\" dir", d)
+			out, err := run(GO, append(a, d)...)
+			fatal(err)("test failed: %v", out)
 		}
 		color.Green("\n✓ tests passed\n\n")
 	},
