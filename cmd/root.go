@@ -12,11 +12,11 @@ import (
 
 // executable dependencies
 const (
-	DEP      = "dep"
-	GO       = "go"
-	HELM     = "helm"
-	KUBECTL  = "kubectl"
-	MINIKUBE = "minikube"
+	DEP     = "dep"
+	DOCKER  = "docker"
+	GO      = "go"
+	HELM    = "helm"
+	KUBECTL = "kubectl"
 )
 
 // global flags
@@ -72,7 +72,7 @@ func Execute() {
 	rootCmd.AddCommand(checkCmd)
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(testCmd)
-	rootCmd.AddCommand(rookCmd)
+	rootCmd.AddCommand(bootstrapCmd)
 
 	rootCmd.Execute()
 }

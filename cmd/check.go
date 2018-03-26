@@ -9,9 +9,9 @@ import (
 
 func checkFatal(commands ...string) {
 	for _, c := range commands {
-		_, err := exec.LookPath(c)
+		p, err := exec.LookPath(c)
 		fatal(err)("check failed (If you are on windows, executables must have a file extension to be found)")
-		verboseLog(color.White, "found %s", c)
+		verboseLog(color.White, "found %s (%s)", c, p)
 	}
 }
 
@@ -20,7 +20,7 @@ var checkCmd = &cobra.Command{
 	Short: "Make sure all executable dependencies are in the path.",
 	Run: func(cmd *cobra.Command, args []string) {
 		log("Looking for all required executables")
-		checkFatal(DEP, GO, KUBECTL, MINIKUBE)
+		checkFatal(DEP, DOCKER, GO, HELM, KUBECTL)
 		color.Green("\n✓ all dependencies located\n\n")
 	},
 }
