@@ -14,7 +14,7 @@ var bootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Install dependencies in the cluster",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		checkFatal(HELM, KUBECTL)
+		checkFatal(DOCKER, HELM, KUBECTL)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		log("Checking that kubectl points to a running cluster")
@@ -57,8 +57,7 @@ func bootstrapRook() {
 	log("Making sure rook repo is registered with helm")
 	out, err := run(HELM, "repo", "list")
 	fatal(err)("Could not query helm repos")
-	found := strings.Index(out, repoName) > 0
-	if !found {
+	if strings.Index(out, repoName) < 0 {
 		out, err := run(HELM, "repo", "add", repoName, "https://charts.rook.io/master")
 		fatal(err)("Could not add rook repo: %v", out)
 	}
@@ -67,7 +66,7 @@ func bootstrapRook() {
 	out, err = run(HELM, "init", "--upgrade")
 	fatal(err)("Could not init helm in cluster")
 
-	waitForResource("Tiller pod", func() (string, error) {
+	waitForResource("Tiller pod", "Running", func() (string, error) {
 		return run(KUBECTL, "get", "pods",
 			"--all-namespaces",
 			"--selector=name=tiller",
@@ -91,27 +90,61 @@ func bootstrapRegistry() {
 	p, err := regexp.Compile("(?i)already\\s*exists")
 	fatal(err)("Could not compile regular expression")
 
-	out, err := run(KUBECTL, "create", "-f", "./resources/registry.yaml")
+	out, err := run(KUBECTL, "apply", "-f", "./resources/registry.yaml")
 	if p.MatchString(out) {
 		err = nil
 	}
 	fatal(err)("Could not create resource: %v", out)
 
-	waitForResource("Registry pod", func() (string, error) {
+	waitForResource("Registry pod", "Running", func() (string, error) {
 		return run(KUBECTL, "get", "pods",
 			"--all-namespaces",
 			"--selector=role=registry",
 			"--output=jsonpath={.items[0].status.phase}",
 		)
 	})
+
+	log("Setting up registry proxy")
+	name := "registry-proxy"
+	port := ""
+	host := ""
+
+	out, err = run(KUBECTL, "get", "svc",
+		"--all-namespaces",
+		"--selector=role=registry",
+		"--output=jsonpath={$.items[?(@.spec.externalID==\"minikube\")].status.addresses[?(@.type==\"InternalIP\")].address}",
+	)
+
+	out, err = run(KUBECTL, "get", "nodes",
+		"--output=jsonpath={$.items[?(@.spec.externalID==\"minikube\")].status.addresses[?(@.type==\"InternalIP\")].address}",
+	)
+	fatal(err)("Could not query cluster's nodes: %v", out)
+	if out != "" {
+		host = out
+	} else {
+		panic("")
+	}
+
+	run(DOCKER, "rm", "-f", name)
+	out, err = run(DOCKER, "run",
+		"-d", "--name", name,
+		"-p", "5000:"+port,
+		"-e", "BACKEND_HOST="+host,
+		"-e", "BACKEND_PORT="+port,
+		"demandbase/docker-tcp-proxy",
+	)
+	fatal(err)("Could not create docker proxy: %v", out)
+
+	//   kubectl get nodes -o jsonpath='{$.items[*].status.addresses[?(@.type=="ExternalIP")].address }'
+	//   kubectl get nodes --output=jsonpath='{$.items[?(@.spec.externalID=="minikube")].status.addresses[?(@.type=="InternalIP")].address}'
 }
 
-func waitForResource(displayName string, runner func() (string, error)) {
+func waitForResource(displayName, expected string, runner func() (string, error)) {
 	time.Sleep(time.Second)
 	for {
 		out, err := runner()
 		fatal(err)("Cannot get %v: %v", displayName, out)
-		if out == "Running" {
+		if out == expected {
 			break
 		}
 		log("Waiting for %v (%v)", displayName, out)

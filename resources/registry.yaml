@@ -17,8 +17,7 @@ spec:
         role: registry
     spec:
       containers:
-      - image: registry.hub.docker.com/library/registry:2.6.1
-        imagePullPolicy: IfNotPresent
+      - image: registry:2.6.1
         name: registry
         ports:
         - containerPort: 5000
@@ -32,9 +31,9 @@ metadata:
   name: registry
   namespace: kube-system
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - port: 5000
-    targetPort: 5000
+    targetPort: 9376
   selector:
     role: registry
