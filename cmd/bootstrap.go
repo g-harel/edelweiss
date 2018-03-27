@@ -90,6 +90,7 @@ func bootstrapRegistry() {
 	p, err := regexp.Compile("(?i)already\\s*exists")
 	fatal(err)("Could not compile regular expression")
 
+	log("Applying registry resources to cluster")
 	out, err := run(KUBECTL, "apply", "-f", "./resources/registry.yaml")
 	if p.MatchString(out) {
 		err = nil
@@ -105,26 +106,55 @@ func bootstrapRegistry() {
 	})
 
 	log("Setting up registry proxy")
-	name := "registry-proxy"
-	port := ""
-	host := ""
+	var port string
+	var host string
 
-	out, err = run(KUBECTL, "get", "svc",
-		"--all-namespaces",
-		"--selector=role=registry",
-		"--output=jsonpath={$.items[?(@.spec.externalID==\"minikube\")].status.addresses[?(@.type==\"InternalIP\")].address}",
-	)
-
+	// checking if cluster is running on minikube
 	out, err = run(KUBECTL, "get", "nodes",
 		"--output=jsonpath={$.items[?(@.spec.externalID==\"minikube\")].status.addresses[?(@.type==\"InternalIP\")].address}",
 	)
 	fatal(err)("Could not query cluster's nodes: %v", out)
-	if out != "" {
+	isMinikube := out != ""
+
+	if isMinikube {
+		log("Fetching registry's adress")
 		host = out
+
+		log("Fetching registry's port")
+		out, err = run(KUBECTL, "get", "svc",
+			"--all-namespaces",
+			"--selector=role=registry",
+			"--output=jsonpath={.items[0].spec.ports[0].nodePort}",
+		)
+		if out == "" {
+			err = fmt.Errorf("Could not find service")
+		}
+		fatal(err)("Could not get service's port: %v", out)
+		port = out
 	} else {
-		panic("")
+		log("Fetching registry's adress")
+		host = waitForResource("Registry LoadBalancer", ".+", func() (string, error) {
+			return run(KUBECTL, "get", "svc",
+				"--all-namespaces",
+				"--selector=role=registry",
+				"--output=jsonpath={.items[0].status.loadBalancer.ingress[0].ip}",
+			)
+		})
+
+		log("Fetching registry's port")
+		out, err = run(KUBECTL, "get", "svc",
+			"--all-namespaces",
+			"--selector=role=registry",
+			"--output=jsonpath={.items[0].spec.ports[0].port}",
+		)
+		if out == "" {
+			err = fmt.Errorf("Could not find service")
+		}
+		fatal(err)("Could not get service's port: %v", out)
+		port = out
 	}
 
+	name := "registry-proxy"
 	run(DOCKER, "rm", "-f", name)
 	out, err = run(DOCKER, "run",
 		"-d", "--name", name,
@@ -134,21 +164,22 @@ func bootstrapRegistry() {
 		"demandbase/docker-tcp-proxy",
 	)
 	fatal(err)("Could not create docker proxy: %v", out)
-
-	//   kubectl get nodes -o jsonpath='{$.items[*].status.addresses[?(@.type=="ExternalIP")].address }'
-	//   kubectl get nodes --output=jsonpath='{$.items[?(@.spec.externalID=="minikube")].status.addresses[?(@.type=="InternalIP")].address}'
 }
 
-func waitForResource(displayName, expected string, runner func() (string, error)) {
+func waitForResource(displayName, expected string, runner func() (string, error)) string {
 	time.Sleep(time.Second)
+	p := regexp.MustCompile(expected)
+	var out string
+	var err error
 	for {
-		out, err := runner()
+		out, err = runner()
 		fatal(err)("Cannot get %v: %v", displayName, out)
-		if out == expected {
+		if p.MatchString(out) {
 			break
 		}
 		log("Waiting for %v (%v)", displayName, out)
 		time.Sleep(time.Second * 3)
 	}
 	time.Sleep(time.Second)
+	return out
 }

@@ -34,6 +34,6 @@ spec:
   type: LoadBalancer
   ports:
   - port: 5000
-    targetPort: 9376
+    targetPort: 5000
   selector:
     role: registry
