@@ -78,9 +78,13 @@ func (m *Manager) Refresh(c *gin.Context) (*Session, error) {
 }
 
 func (m *Manager) createSession(w http.ResponseWriter) (*Session, error) {
-	sessionID := uuid.NewV4().String()
+	uu, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+	sessionID := uu.String()
 
-	err := m.store.create(sessionID)
+	err = m.store.create(sessionID)
 	if err != nil {
 		return nil, err
 	}

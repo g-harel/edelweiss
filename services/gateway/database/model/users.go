@@ -54,7 +54,11 @@ func (u *users) Add(e, p string) (*User, error) {
 	}
 	defer stmt.Close()
 
-	id := uuid.NewV4().String()
+	uu, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+	id := uu.String()
 	_, err = stmt.Exec(id, e, h)
 	if err != nil {
 		return nil, err

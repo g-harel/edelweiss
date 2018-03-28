@@ -12,7 +12,6 @@ import (
 
 // executable dependencies
 const (
-	DEP     = "dep"
 	DOCKER  = "docker"
 	GO      = "go"
 	HELM    = "helm"
@@ -70,7 +69,6 @@ func init() {
 // Execute executes the root command.
 func Execute() {
 	rootCmd.AddCommand(checkCmd)
-	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(testCmd)
 	rootCmd.AddCommand(bootstrapCmd)
 
