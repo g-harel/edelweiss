@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"fmt"
@@ -91,7 +91,7 @@ func bootstrapRegistry() {
 	fatal(err)("Could not compile regular expression")
 
 	log("Applying registry resources to cluster")
-	out, err := run(KUBECTL, "apply", "-f", "./resources/registry.yaml")
+	out, err := run(KUBECTL, "apply", "-f", "./cli/resources/registry.yaml")
 	if p.MatchString(out) {
 		err = nil
 	}
