@@ -1,16 +1,18 @@
 package resources
 
 import (
+	"github.com/g-harel/edelweiss/client"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	apicorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/kubernetes/pkg/util/pointer"
 )
 
-// Registry resource group deploys a container registry to the cluster and
-// exposes it through a LoadBalancer service.
-var Registry = &Group{
-	Services: []apicorev1.Service{
+// Registry resource group represents a container registry which is exposed
+// using a LoadBalancer service.
+var Registry = &client.Group{
+	Services: []*apicorev1.Service{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "registry",
@@ -20,6 +22,7 @@ var Registry = &Group{
 				},
 			},
 			Spec: apicorev1.ServiceSpec{
+				Type: "LoadBalancer",
 				Ports: []apicorev1.ServicePort{
 					{
 						Port: 5000,
@@ -35,7 +38,7 @@ var Registry = &Group{
 			},
 		},
 	},
-	Deployments: []appsv1beta1.Deployment{
+	Deployments: []*appsv1beta1.Deployment{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "registry",
@@ -45,7 +48,7 @@ var Registry = &Group{
 				},
 			},
 			Spec: appsv1beta1.DeploymentSpec{
-				Replicas: int32Ptr(1),
+				Replicas: pointer.Int32Ptr(1),
 				Template: apicorev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{

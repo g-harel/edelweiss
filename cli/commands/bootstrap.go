@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/g-harel/edelweiss/cli/resources"
+	"github.com/g-harel/edelweiss/client"
 	"github.com/spf13/cobra"
 )
 
@@ -87,14 +89,16 @@ func bootstrapRook() {
 func bootstrapRegistry() {
 	log("Installing registry in the cluster")
 
-	p, err := regexp.Compile("(?i)already\\s*exists")
+	_, err := regexp.Compile("(?i)already\\s*exists")
 	fatal(err)("Could not compile regular expression")
 
 	log("Applying registry resources to cluster")
-	out, err := run(KUBECTL, "apply", "-f", "./cli/resources/registry.yaml")
-	if p.MatchString(out) {
-		err = nil
-	}
+	// out, err := run(KUBECTL, "apply", "-f", "./cli/resources/registry.yaml")
+	// if p.MatchString(out) {
+	// 	err = nil
+	// }
+	out := ""
+	client.A(resources.Registry)
 	fatal(err)("Could not create resource: %v", out)
 
 	waitForResource("Registry pod", "Running", func() (string, error) {
