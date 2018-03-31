@@ -1,7 +1,7 @@
 # based off minikube registry addon https://github.com/kubernetes/minikube/tree/master/deploy/addons/registry
 # addon not used to avoid dependency on minikube.
-apiVersion: v1
-kind: ReplicationController
+apiVersion: extensions/v1beta1
+kind: Deployment
 metadata:
   labels:
     role: registry
@@ -9,8 +9,6 @@ metadata:
   namespace: kube-system
 spec:
   replicas: 1
-  selector:
-    role: registry
   template:
     metadata:
       labels:

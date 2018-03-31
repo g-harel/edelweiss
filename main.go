@@ -38,11 +38,12 @@ func main() {
 		panic(err)
 	}
 
+	commands.Execute()
+	return
 	fmt.Println(isMinikube(clientset))
 	fmt.Println(getPodByRole(clientset, "kube-system", "registry"))
 
 	return
-	commands.Execute()
 }
 
 func isMinikube(cs *kubernetes.Clientset) (bool, error) {
@@ -60,14 +61,17 @@ func isMinikube(cs *kubernetes.Clientset) (bool, error) {
 	return true, nil
 }
 
-func getPodByRole(cs *kubernetes.Clientset, ns, role string) (*apicorev1.Pod, error) {
+func getPodByRole(cs *kubernetes.Clientset, ns, rl string) (*apicorev1.Pod, error) {
 	podClient := cs.CoreV1().Pods(ns)
 	l, err := podClient.List(meta_v1.ListOptions{
-		LabelSelector: "role=" + role,
+		LabelSelector: "role=" + rl,
 		Limit:         1,
 	})
 	if err != nil {
 		panic(err)
+	}
+	if len(l.Items) < 1 {
+		return nil, fmt.Errorf("Pods not found")
 	}
 	return &l.Items[0], nil
 }
