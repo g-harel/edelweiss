@@ -1,17 +1,17 @@
 package resources
 
 import (
-	"github.com/g-harel/edelweiss/client"
+	client "github.com/g-harel/edelweiss/client"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	apicorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/kubernetes/pkg/util/pointer"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
+	pointer "k8s.io/kubernetes/pkg/util/pointer"
 )
 
 // Registry resource group represents a container registry which is exposed
 // using a LoadBalancer service.
-var Registry = &client.Group{
+var Registry = &client.SpecGroup{
 	Services: []*apicorev1.Service{
 		{
 			ObjectMeta: metav1.ObjectMeta{

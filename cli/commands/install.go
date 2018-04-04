@@ -90,13 +90,12 @@ func installRegistry() {
 	log.Fatal(err, "Could not compile regular expression")
 
 	log.Progress("Applying registry resources to cluster")
-	// out, err := run(KUBECTL, "apply", "-f", "./cli/resources/registry.yaml")
-	// if p.MatchString(out) {
-	// 	err = nil
-	// }
-	out := ""
-	client.A(resources.Registry)
-	log.Fatal(err, "Could not create resource: %v", out)
+	c, err := client.New()
+	log.Fatal(err, "Could not connect")
+	err = c.
+		Namespace("kube-system").
+		Apply(resources.Registry)
+	log.Fatal(err, "Could not create resource")
 
 	waitForResource("Registry pod", "Running", func() (string, error) {
 		return cli.Run(KUBECTL, "get", "pods",
@@ -111,7 +110,7 @@ func installRegistry() {
 	var host string
 
 	// checking if cluster is running on minikube
-	out, err = cli.Run(KUBECTL, "get", "nodes",
+	out, err := cli.Run(KUBECTL, "get", "nodes",
 		"--output=jsonpath={$.items[?(@.spec.externalID==\"minikube\")].status.addresses[?(@.type==\"InternalIP\")].address}",
 	)
 	log.Fatal(err, "Could not query cluster's nodes: %v", out)

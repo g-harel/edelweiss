@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 
 	apicorev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	kubernetes "k8s.io/client-go/kubernetes"
+	clientcmd "k8s.io/client-go/tools/clientcmd"
+	homedir "k8s.io/client-go/util/homedir"
 )
 
 // connect to cluster
@@ -19,33 +19,42 @@ import (
 // select pod by name (tiller, registry) + get status
 // get service info
 
-func A(g *Group) {
-	var customconfig string
+type Client struct {
+	clientset  *kubernetes.Clientset
+	namespace  string
+	isMinikube *bool
+}
 
-	var kubeconfig string
-	if customconfig == "" {
-		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
-	} else {
-		kubeconfig = customconfig
-	}
+func New() (*Client, error) {
+	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	fmt.Println(apply(clientset, g, "kube-system"))
-	fmt.Println(isMinikube(clientset))
-	fmt.Println(getPodByRole(clientset, "kube-system", "registry"))
+	return &Client{
+		clientset: clientset,
+		namespace: "default",
+	}, nil
 }
 
-func apply(cs *kubernetes.Clientset, g *Group, ns string) error {
+func (c *Client) Namespace(namespace string) *Client {
+	t := Client{
+		clientset:  c.clientset,
+		isMinikube: c.isMinikube,
+		namespace:  namespace,
+	}
+	return &t
+}
+
+func (c *Client) Apply(g *SpecGroup) error {
 	if len(g.Deployments) > 0 {
-		dc := cs.AppsV1beta1().Deployments(ns)
+		dc := c.clientset.AppsV1beta1().Deployments(c.namespace)
 		for _, d := range g.Deployments {
 			_, err := dc.Create(d)
 			if errors.IsAlreadyExists(err) {
@@ -59,7 +68,7 @@ func apply(cs *kubernetes.Clientset, g *Group, ns string) error {
 	}
 
 	if len(g.Services) > 0 {
-		sc := cs.CoreV1().Services(ns)
+		sc := c.clientset.CoreV1().Services(c.namespace)
 		for _, s := range g.Services {
 			_, err := sc.Create(s)
 			if errors.IsAlreadyExists(err) {
@@ -75,25 +84,30 @@ func apply(cs *kubernetes.Clientset, g *Group, ns string) error {
 	return nil
 }
 
-func isMinikube(cs *kubernetes.Clientset) (bool, error) {
-	nodeClient := cs.CoreV1().Nodes()
+func (c *Client) IsMinikube() (bool, error) {
+	if c.isMinikube != nil {
+		return *c.isMinikube, nil
+	}
+
+	nodeClient := c.clientset.CoreV1().Nodes()
 	l, err := nodeClient.List(metav1.ListOptions{})
 	if err != nil {
 		return false, err
 	}
-	if len(l.Items) != 1 {
-		return false, nil
+
+	t := true
+	if len(l.Items) != 1 || l.Items[0].GetName() != "minikube" {
+		t = false
 	}
-	if l.Items[0].GetName() != "minikube" {
-		return false, nil
-	}
-	return true, nil
+	c.isMinikube = &t
+
+	return t, nil
 }
 
-func getPodByRole(cs *kubernetes.Clientset, ns, rl string) (*apicorev1.Pod, error) {
-	podClient := cs.CoreV1().Pods(ns)
+func (c *Client) GetPodByRole(role string) (*apicorev1.Pod, error) {
+	podClient := c.clientset.CoreV1().Pods(c.namespace)
 	l, err := podClient.List(metav1.ListOptions{
-		LabelSelector: "role=" + rl,
+		LabelSelector: "role=" + role,
 		Limit:         1,
 	})
 	if err != nil {
