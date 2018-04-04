@@ -12,19 +12,14 @@ import (
 	homedir "k8s.io/client-go/util/homedir"
 )
 
-// connect to cluster
-// check if running on minikube cluster
-// apply registry resources
-
-// select pod by name (tiller, registry) + get status
-// get service info
-
+// Client is a wrapper type around the kubernetes client.
 type Client struct {
-	clientset  *kubernetes.Clientset
-	namespace  string
+	*kubernetes.Clientset
 	isMinikube *bool
+	namespace  string
 }
 
+// New returns a pointer to a new instance of client.
 func New() (*Client, error) {
 	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
 
@@ -38,23 +33,31 @@ func New() (*Client, error) {
 	}
 
 	return &Client{
-		clientset: clientset,
-		namespace: "default",
+		Clientset:  clientset,
+		isMinikube: nil,
+		namespace:  "default",
 	}, nil
 }
 
-func (c *Client) Namespace(namespace string) *Client {
-	t := Client{
-		clientset:  c.clientset,
+func (c *Client) copy() *Client {
+	return &Client{
+		Clientset:  c.Clientset,
 		isMinikube: c.isMinikube,
-		namespace:  namespace,
+		namespace:  c.namespace,
 	}
-	return &t
 }
 
+// Namespace copies the client and changes the namespace of the
+func (c *Client) Namespace(namespace string) *Client {
+	t := c.copy()
+	t.namespace = namespace
+	return t
+}
+
+// Apply will create or update all resources in the spec group.
 func (c *Client) Apply(g *SpecGroup) error {
 	if len(g.Deployments) > 0 {
-		dc := c.clientset.AppsV1beta1().Deployments(c.namespace)
+		dc := c.Deployments()
 		for _, d := range g.Deployments {
 			_, err := dc.Create(d)
 			if errors.IsAlreadyExists(err) {
@@ -68,7 +71,7 @@ func (c *Client) Apply(g *SpecGroup) error {
 	}
 
 	if len(g.Services) > 0 {
-		sc := c.clientset.CoreV1().Services(c.namespace)
+		sc := c.Services()
 		for _, s := range g.Services {
 			_, err := sc.Create(s)
 			if errors.IsAlreadyExists(err) {
@@ -84,12 +87,15 @@ func (c *Client) Apply(g *SpecGroup) error {
 	return nil
 }
 
+// IsMinikube checks if the configured cluster is running on minikube.
+// Although not ideal, some logic must be changed when interacting with a
+// minikube cluster. ex: LoadBalancer services never get an externalIP.
 func (c *Client) IsMinikube() (bool, error) {
 	if c.isMinikube != nil {
 		return *c.isMinikube, nil
 	}
 
-	nodeClient := c.clientset.CoreV1().Nodes()
+	nodeClient := c.CoreV1().Nodes()
 	l, err := nodeClient.List(metav1.ListOptions{})
 	if err != nil {
 		return false, err
@@ -105,7 +111,7 @@ func (c *Client) IsMinikube() (bool, error) {
 }
 
 func (c *Client) GetPodByRole(role string) (*apicorev1.Pod, error) {
-	podClient := c.clientset.CoreV1().Pods(c.namespace)
+	podClient := c.CoreV1().Pods(c.namespace)
 	l, err := podClient.List(metav1.ListOptions{
 		LabelSelector: "role=" + role,
 		Limit:         1,
