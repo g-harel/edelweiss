@@ -8,7 +8,6 @@ import (
 )
 
 // Logger is a shared instance of the cli's logger.
-// This allows other cli packages to consume the same global logger.
 var Logger = logger{}
 
 type logger struct{}

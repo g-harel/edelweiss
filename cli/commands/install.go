@@ -1,15 +1,21 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	types "github.com/docker/docker/api/types"
+	container "github.com/docker/docker/api/types/container"
+	filters "github.com/docker/docker/api/types/filters"
+	mobyClient "github.com/docker/docker/client"
+	nat "github.com/docker/go-connections/nat"
 	cli "github.com/g-harel/edelweiss/cli"
 	resources "github.com/g-harel/edelweiss/cli/resources"
-	client "github.com/g-harel/edelweiss/client"
+	kubeClient "github.com/g-harel/edelweiss/client"
 	cobra "github.com/spf13/cobra"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	apicorev1 "k8s.io/api/core/v1"
@@ -78,17 +84,17 @@ func installRook() {
 }
 
 func installRegistry() {
-	c, err := client.New()
+	client, err := kubeClient.New()
 	log.Fatal(err, "Could not connect")
-	c = c.Namespace("kube-system")
+	client = client.Namespace("kube-system")
 
 	log.Progress("Applying registry resources to cluster")
 
-	err = c.Apply(resources.Registry)
+	err = client.Apply(resources.Registry)
 	log.Fatal(err, "Could not create resource")
 
-	d, err := c.Deployments().Watch(metav1.ListOptions{
-		LabelSelector: "role=registry",
+	d, err := client.Deployments().Watch(metav1.ListOptions{
+		LabelSelector: "role=" + resources.Registry.Deployments[0].ObjectMeta.Labels["role"],
 		Limit:         1,
 	})
 	log.Fatal(err, "Could not watch deployments")
@@ -103,10 +109,10 @@ func installRegistry() {
 		}
 	}
 
-	isMinikube, err := c.IsMinikube()
+	isMinikube, err := client.IsMinikube()
 	log.Fatal(err, "Could not check if cluster running on minikube")
 
-	service, err := c.Services().Get("registry", metav1.GetOptions{})
+	service, err := client.Services().Get("registry", metav1.GetOptions{})
 	log.Fatal(err, "Could not get registry service")
 
 	log.Progress("Fetching registry's adress")
@@ -115,14 +121,14 @@ func installRegistry() {
 	var host string
 
 	if isMinikube {
-		nodes, err := c.Nodes().List(metav1.ListOptions{})
+		nodes, err := client.Nodes().List(metav1.ListOptions{})
 		log.Fatal(err, "Could not get cluster nodes")
 
 		host = nodes.Items[0].Status.Addresses[0].Address
 		port = strconv.Itoa(int(service.Spec.Ports[0].NodePort))
 	} else {
-		s, err := c.Services().Watch(metav1.ListOptions{
-			LabelSelector: "role=registry",
+		s, err := client.Services().Watch(metav1.ListOptions{
+			LabelSelector: "role=" + resources.Registry.Services[0].ObjectMeta.Labels["role"],
 			Limit:         1,
 		})
 		log.Fatal(err, "Could not watch services")
@@ -138,7 +144,7 @@ func installRegistry() {
 			}
 		}
 
-		service, err = c.Services().Update(service)
+		service, err = client.Services().Update(service)
 		log.Fatal(err, "Could not update service status")
 
 		host = service.Status.LoadBalancer.Ingress[0].IP
@@ -147,16 +153,8 @@ func installRegistry() {
 
 	log.Progress("Setting up registry proxy")
 
-	name := "registry-proxy"
-	cli.Run(DOCKER, "rm", "-f", name)
-	out, err := cli.Run(DOCKER, "run",
-		"-d", "--name", name,
-		"-p", "5000:"+port,
-		"-e", "BACKEND_HOST="+host,
-		"-e", "BACKEND_PORT="+port,
-		"demandbase/docker-tcp-proxy",
-	)
-	log.Fatal(err, "Could not create docker proxy: %v", out)
+	err = runRegistryContainer("registry-proxy", host, port)
+	log.Fatal(err, "Could not create docker proxy")
 }
 
 func waitForResource(displayName, expected string, runner func() (string, error)) string {
@@ -175,4 +173,70 @@ func waitForResource(displayName, expected string, runner func() (string, error)
 	}
 	time.Sleep(time.Second)
 	return out
+}
+
+func runRegistryContainer(name, host, port string) error {
+	client, err := mobyClient.NewEnvClient()
+	if err != nil {
+		return err
+	}
+
+	containers, err := client.ContainerList(
+		context.Background(),
+		types.ContainerListOptions{
+			Limit: 1,
+			Filters: filters.NewArgs(filters.KeyValuePair{
+				Key:   "name",
+				Value: name,
+			}),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(containers) > 0 {
+		// error ignored because removal is optional and container often does not exist
+		_ = client.ContainerRemove(
+			context.Background(),
+			containers[0].ID,
+			types.ContainerRemoveOptions{Force: true},
+		)
+	}
+
+	p, err := nat.NewPort("tcp", port)
+	if err != nil {
+		return err
+	}
+
+	body, err := client.ContainerCreate(
+		context.Background(),
+		&container.Config{
+			Image: "demandbase/docker-tcp-proxy",
+			ExposedPorts: nat.PortSet{
+				p: struct{}{},
+			},
+			Env: []string{
+				"BACKEND_HOST=" + host,
+				"BACKEND_PORT=" + port,
+			},
+		},
+		&container.HostConfig{
+			PortBindings: nat.PortMap{
+				p: []nat.PortBinding{{
+					HostIP:   "localhost",
+					HostPort: "5000",
+				}},
+			},
+		},
+		nil,
+		name,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = client.ContainerStart(context.Background(), body.ID, types.ContainerStartOptions{})
+
+	return err
 }

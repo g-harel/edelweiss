@@ -10,7 +10,7 @@ var checkCmd = &cobra.Command{
 	Short: "Make sure all executable dependencies are in the path",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Progress("Looking for all required executables")
-		cli.CheckFatal(DOCKER, GO, HELM, KUBECTL)
+		cli.CheckFatal(GO, HELM, KUBECTL)
 
 		log.Success("all dependencies located")
 	},

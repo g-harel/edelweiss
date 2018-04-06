@@ -8,7 +8,6 @@ import (
 // TODO use clients for everything
 // executable dependencies
 const (
-	DOCKER  = "docker"
 	GO      = "go"
 	HELM    = "helm"
 	KUBECTL = "kubectl"
