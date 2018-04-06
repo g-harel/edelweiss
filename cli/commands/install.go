@@ -11,6 +11,8 @@ import (
 	resources "github.com/g-harel/edelweiss/cli/resources"
 	client "github.com/g-harel/edelweiss/client"
 	cobra "github.com/spf13/cobra"
+	appsv1beta1 "k8s.io/api/apps/v1beta1"
+	apicorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -18,18 +20,6 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install dependencies in the cluster",
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Progress("Checking that kubectl points to a running cluster")
-		exited := false
-		go func() {
-			time.Sleep(time.Second * 3)
-			if !exited {
-				log.Fatal(fmt.Errorf("kubectl cluster-info timeout"), "Could not connect to cluster")
-			}
-		}()
-		out, err := cli.Run(KUBECTL, "cluster-info")
-		exited = true
-		log.Fatal(err, "Could not connect to cluster: %v", out)
-
 		if len(args) == 0 {
 			args = []string{"registry", "rook"}
 		}
@@ -52,6 +42,8 @@ var installCmd = &cobra.Command{
 	},
 }
 
+// TODO refactor
+// https://akomljen.com/rook-cloud-native-on-premises-persistent-storage-for-kubernetes-on-kubernetes/
 func installRook() {
 	repoName := "rook-master"
 
@@ -95,17 +87,21 @@ func installRegistry() {
 	err = c.Apply(resources.Registry)
 	log.Fatal(err, "Could not create resource")
 
-	waitForResource("Registry pod", "Running", func() (string, error) {
-		return cli.Run(KUBECTL, "get", "pods",
-			"--all-namespaces",
-			"--selector=role=registry",
-			"--output=jsonpath={.items[0].status.phase}",
-		)
+	d, err := c.Deployments().Watch(metav1.ListOptions{
+		LabelSelector: "role=registry",
+		Limit:         1,
 	})
+	log.Fatal(err, "Could not watch deployments")
 
-	log.Progress("Setting up registry proxy")
-	var port string
-	var host string
+	for event := range d.ResultChan() {
+		deployment, ok := event.Object.(*appsv1beta1.Deployment)
+		if !ok {
+			log.Fatal(fmt.Errorf("Type assertion failed"), "Could not read watched deployment")
+		}
+		if deployment.Status.ReadyReplicas == *deployment.Spec.Replicas {
+			break
+		}
+	}
 
 	isMinikube, err := c.IsMinikube()
 	log.Fatal(err, "Could not check if cluster running on minikube")
@@ -113,32 +109,43 @@ func installRegistry() {
 	service, err := c.Services().Get("registry", metav1.GetOptions{})
 	log.Fatal(err, "Could not get registry service")
 
-	if isMinikube {
-		log.Progress("Fetching registry's adress")
+	log.Progress("Fetching registry's adress")
 
+	var port string
+	var host string
+
+	if isMinikube {
 		nodes, err := c.Nodes().List(metav1.ListOptions{})
 		log.Fatal(err, "Could not get cluster nodes")
 
 		host = nodes.Items[0].Status.Addresses[0].Address
 		port = strconv.Itoa(int(service.Spec.Ports[0].NodePort))
 	} else {
-		log.Progress("Fetching registry's adress")
-
-		waitForResource("Registry LoadBalancer", ".+", func() (string, error) {
-			return cli.Run(KUBECTL, "get", "svc",
-				"--all-namespaces",
-				"--selector=role=registry",
-				"--output=jsonpath={.items[0].status.loadBalancer.ingress[0].ip}",
-			)
+		s, err := c.Services().Watch(metav1.ListOptions{
+			LabelSelector: "role=registry",
+			Limit:         1,
 		})
+		log.Fatal(err, "Could not watch services")
 
-		service, err := c.Services().Update(service)
+		for event := range s.ResultChan() {
+			var ok bool
+			service, ok = event.Object.(*apicorev1.Service)
+			if !ok {
+				log.Fatal(fmt.Errorf("Type assertion failed"), "Could not read watched service")
+			}
+			if len(service.Status.LoadBalancer.Ingress) > 0 {
+				break
+			}
+		}
+
+		service, err = c.Services().Update(service)
 		log.Fatal(err, "Could not update service status")
 
-		log.Progress("Fetching registry's port")
 		host = service.Status.LoadBalancer.Ingress[0].IP
 		port = strconv.Itoa(int(service.Spec.Ports[0].Port))
 	}
+
+	log.Progress("Setting up registry proxy")
 
 	name := "registry-proxy"
 	cli.Run(DOCKER, "rm", "-f", name)
