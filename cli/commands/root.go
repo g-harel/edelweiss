@@ -25,7 +25,6 @@ func init() {
 
 // Execute executes the root command.
 func Execute() {
-	rootCmd.AddCommand(checkCmd)
 	rootCmd.AddCommand(testCmd)
 	rootCmd.AddCommand(installCmd)
 

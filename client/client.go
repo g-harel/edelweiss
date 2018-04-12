@@ -1,10 +1,8 @@
 package client
 
 import (
-	"fmt"
 	"path/filepath"
 
-	apicorev1 "k8s.io/api/core/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
@@ -108,19 +106,4 @@ func (c *Client) IsMinikube() (bool, error) {
 	c.isMinikube = &t
 
 	return t, nil
-}
-
-func (c *Client) GetPodByRole(role string) (*apicorev1.Pod, error) {
-	podClient := c.CoreV1().Pods(c.namespace)
-	l, err := podClient.List(metav1.ListOptions{
-		LabelSelector: "role=" + role,
-		Limit:         1,
-	})
-	if err != nil {
-		panic(err)
-	}
-	if len(l.Items) < 1 {
-		return nil, fmt.Errorf("Pods not found")
-	}
-	return &l.Items[0], nil
 }
