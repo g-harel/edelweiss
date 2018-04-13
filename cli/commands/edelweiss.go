@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var log = cli.Logger
+var clilog = cli.Logger
 
 var rootCmd = &cobra.Command{
 	Use: "edelweiss",

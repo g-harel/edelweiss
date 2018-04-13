@@ -26,11 +26,11 @@ var testCmd = &cobra.Command{
 		}
 
 		for _, d := range dirs {
-			log.Progress("Running tests in \"%v\" dir", d)
-			out, err := cli.Run("go", append(a, d)...)
-			log.Fatal(err, "test failed: %v", out)
+			clilog.Progress("Running tests in \"%v\" dir", d)
+			out, err := cli.Exec("go", append(a, d)...)
+			clilog.Fatal(err, "test failed: %v", out)
 		}
 
-		log.Success("tests passed")
+		clilog.Success("tests passed")
 	},
 }
