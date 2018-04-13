@@ -5,14 +5,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TODO use clients for everything
-// executable dependencies
-const (
-	GO      = "go"
-	HELM    = "helm"
-	KUBECTL = "kubectl"
-)
-
 var log = cli.Logger
 
 var rootCmd = &cobra.Command{
@@ -20,7 +12,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	cli.Flags(rootCmd)
+	cli.InitFlags(rootCmd)
 }
 
 // Execute executes the root command.

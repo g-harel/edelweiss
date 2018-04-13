@@ -12,7 +12,8 @@ var (
 	WORKDIR *string
 )
 
-func Flags(cmd *cobra.Command) {
+// InitFlags initializes the values of the global flags.
+func InitFlags(cmd *cobra.Command) {
 	dir, err := os.Getwd()
 	Logger.Fatal(err, "Could not locate working directory")
 

@@ -6,6 +6,8 @@ import (
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubernetes "k8s.io/client-go/kubernetes"
+	typedappsv1beta1 "k8s.io/client-go/kubernetes/typed/apps/v1beta1"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	clientcmd "k8s.io/client-go/tools/clientcmd"
 	homedir "k8s.io/client-go/util/homedir"
 )
@@ -106,4 +108,19 @@ func (c *Client) IsMinikube() (bool, error) {
 	c.isMinikube = &t
 
 	return t, nil
+}
+
+// Services is a shortcut to the service client which uses the configured namespace.
+func (c *Client) Services() typedcorev1.ServiceInterface {
+	return c.CoreV1().Services(c.namespace)
+}
+
+// Deployments is a shortcut to the deployment client which uses the configured namespace.
+func (c *Client) Deployments() typedappsv1beta1.DeploymentInterface {
+	return c.AppsV1beta1().Deployments(c.namespace)
+}
+
+// Nodes is a shortcut to the node client.
+func (c *Client) Nodes() typedcorev1.NodeInterface {
+	return c.CoreV1().Nodes()
 }
