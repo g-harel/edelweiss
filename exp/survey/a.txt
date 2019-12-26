@@ -1,0 +1,17 @@
+# sum up to n
+
+if x=9; 1+2+3+4+5+6+7+8+x=y
+
+if x=7; then add all numbers leading to x in sequence
+
+if x=7; (x-0)+(x-1)+(x-2)+(x-3)+(x-4)+(x-5)+x-6)+(x-x)=y
+
+if x=7; then add numbers 1 to x in sequence
+
+if x=7; @sum((x-0)..(x-x), 0)
+        @sum(0..x)
+
+# see if word has more than one "a"
+
+if i give you a word spell it out and IF("a" in the word >1; yes, no)
+"a" and "A"=1; sum all the numbers

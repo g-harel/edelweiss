@@ -1,0 +1,26 @@
+# sum numbers from 0 to n
+
+suppose n is 700
+0+100 100+55
+155+x
+x is any number
+0+x=y
+0+x=y+any number repeat until you arrive at n
+when x is y repeat until you arrive at n
+when x=5 repeat by adding consecutively
+0+x=5 add repeat and store result
+5+1 repeat sum plus 1 until n
+
+# see if word has more than one "r"
+
+start by r=1
+in a word consider r=1
+in a word detect r and add to find number of r's
+if y=r and r=1 then y=1
+find y
+retain
+if you find another y
+add to previous y
+retain sum
+until solution
+ie number of r 's in a word
