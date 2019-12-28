@@ -11,6 +11,9 @@
             handler)
         acc))
 
+;;
+;;
+
 (defun adder0 (n)
     (reduceRight 0 (seq n) '+))
 
@@ -25,3 +28,17 @@
 
 (print (adder0 5))
 (print (adder1 5))
+
+;;
+;;
+
+(defun counter0 (str char)
+    (reduceRight
+        0
+        str
+        (lambda (acc currChar)
+            (if (string-equal currChar char)
+                (+ 1 acc)
+                acc))))
+
+(print (counter0 '("a" "b" "a") "a"))
