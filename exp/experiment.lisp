@@ -3,6 +3,7 @@
     (if (> count 0)
         (cons count (seq (- count 1)))))
 
+;; Reduces list items into accumulator value using handler.
 (defun reduceRight (acc list handler)
     (if (> (length list) 0)
         (reduceRight
@@ -10,6 +11,11 @@
             (cdr list)
             handler)
         acc))
+
+;; Splits string into list of single-character strings.
+(defun split (str)
+    (loop for i from 0 to (- (length str) 1)
+        collect (string (aref str i))))
 
 ;;
 ;;
@@ -26,8 +32,10 @@
 
 ;;
 
-(print (adder0 5))
-(print (adder1 5))
+(print
+    (adder0 5))
+(print
+    (adder1 5))
 
 ;;
 ;;
@@ -35,10 +43,11 @@
 (defun counter0 (str char)
     (reduceRight
         0
-        str
+        (split str)
         (lambda (acc currChar)
             (if (string-equal currChar char)
                 (+ 1 acc)
                 acc))))
 
-(print (counter0 '("a" "b" "a") "a"))
+(print
+    (counter0 "abaasdass" "a"))
