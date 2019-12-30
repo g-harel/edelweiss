@@ -1,0 +1,22 @@
+Module("Experiment")
+
+Import("Comp")
+Import("Cond")
+Import("List")
+Import("Math")
+
+Adder (n :Int) (sum :Int) ->
+    Math.Sum(List.Between(0, n))
+
+relativeCounter
+    (T :Comparable)
+    (list :List(:T), item :T)
+    (count :Int) ->
+    Cond.If(List.Empty(list), 0,
+        Math.Sum(
+            Cond.If(Comp.Equal(List.Head(list), item), 1, 0)
+            Counter(List.Tail(list), item)))
+
+# :String === :List(:Char)
+Counter (s :String, item :Char) (count :Int) ->
+    relativeCounter(:Char)(s, item)
