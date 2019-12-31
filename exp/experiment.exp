@@ -1,22 +1,16 @@
-Module("Experiment")
+# Interfaces/types capitalized
+# String === Listable<Char>
 
-Import("Comp")
-Import("Cond")
-Import("List")
-Import("Math")
+relativeSumList <T Summable> (list Reducible<T>) (T) ->
+    list.reduce(0, (a T, b T) (t T) : a.Sum(b))
 
-Adder (n :Int) (sum :Int) ->
-    Math.Sum(List.Between(0, n))
+relativeCounter <T Comparable> (list Listable<T>, item T) (count Num) ->
+    list.empty() ? 0
+        : relativeCounter<T, S>(list.tail(), item)
+            .sum(item.equal(list.head()) ? 1 : 0))
 
-relativeCounter
-    (T :Comparable)
-    (list :List(:T), item :T)
-    (count :Int) ->
-    Cond.If(List.Empty(list), 0,
-        Math.Sum(
-            Cond.If(Comp.Equal(List.Head(list), item), 1, 0)
-            Counter(List.Tail(list), item)))
+export adder (n Num) (sum Num) ->
+    relativeSumList(List.Between(0, n))
 
-# :String === :List(:Char)
-Counter (s :String, item :Char) (count :Int) ->
-    relativeCounter(:Char)(s, item)
+export counter (s String, item Char) (count Int) ->
+    relativeCounter<Char>(s, item)
