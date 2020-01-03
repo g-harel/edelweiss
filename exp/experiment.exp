@@ -1,21 +1,44 @@
-# Interfaces/types capitalized
-# String === Listable<Char>
+# Interfaces capitalized
 
-func relativeSumList <T Summable> (list Reducible<T>) (T) {
-    return list.reduce(0, func (a T, b T) (t T) a.add(b));
+export interface List <T> {
+    empty () (bool)
+    head () (T | null)
+    tail () (List<T)
+    reduce <T> (acc T, func (T, T) (T)) (T)
 }
 
-func relativeCounter <T Comparable> (list Listable<T>, item T) (count Num) {
-    return? list.empty() 0;
-    remaining := relativeCounter<T>(list.tail(), item)
-    return? item.equal(list.head()) remaining.add(1)
+export interface Comparable <T> {
+    equals (T) (bool)
+}
+
+export interface Num {
+    Comparable
+    add (Num) (Num)
+}
+
+export interface Char {
+    Comparable
+}
+
+export interface String {
+    List<Char>
+}
+
+func sumList (nums List<Num>) (T) {
+    return nums.reduce(0, func (a T, b T) a.add(b));
+}
+
+func relativeCounter <T Comparable> (items List<T>, item T) (Num) {
+    return? items.empty() 0
+    remaining := relativeCounter<T>(items.tail(), item)
+    return? item.equals(items.head()) remaining.add(1)
     return remaining
 }
 
-export func adder (n Num) (sum Num) {
-    return relativeSumList(List.Between(0, n))
+export func adder (n Num) (Num) {
+    return relativeSumList([0..n])
 }
 
-export func counter (s String, item Char) (count Int) {
+export func counter (s String, item Char) (Num) {
     return relativeCounter<Char>(s, item)
 }
