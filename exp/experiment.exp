@@ -10,7 +10,7 @@ share type Comparable <T> {
 share type List <T> {
     Comparable<Self>
     share empty () (Bool)
-    share head () (T | TODO-null)
+    share head () (T?)
     share tail () (Self)
     share reduce <T> (acc T, func (T, T) (T)) (T)
 }
@@ -63,7 +63,9 @@ func sumList (nums List<Num>) (T) {
 func relativeCounter <T Comparable> (items List<T>, item T) (Num) {
     return? items.empty() 0
     remaining = relativeCounter<T>(items.tail(), item)
-    return? item.equals(items.head()) remaining.add(1)
+    if exists items.head() as head {
+        return? item.equals(head) remaining.add(1)
+    }
     return remaining
 }
 
