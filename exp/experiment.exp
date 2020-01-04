@@ -1,27 +1,59 @@
-# Interfaces capitalized
-
-export interface List <T> {
-    empty () (bool)
-    head () (T | null)
-    tail () (List<T)
-    reduce <T> (acc T, func (T, T) (T)) (T)
+share type Bool {
+    Comparable<Self>
+    share invert () (Bool)
 }
 
-export interface Comparable <T> {
-    equals (T) (bool)
+share type Comparable <T> {
+    share equals (T) (Bool)
 }
 
-export interface Num {
-    Comparable
-    add (Num) (Num)
+share type List <T> {
+    Comparable<Self>
+    share empty () (Bool)
+    share head () (T | TODO-null)
+    share tail () (Self)
+    share reduce <T> (acc T, func (T, T) (T)) (T)
 }
 
-export interface Char {
-    Comparable
+share type Num {
+    Comparable<Self>
+    share add (Self) (Self)
+    share greater (Self) (Bool)
 }
 
-export interface String {
+share type Char {
+    Comparable<Self>
+}
+
+share type String {
     List<Char>
+}
+
+share type Vehicle {
+    Comparable<Self>
+    share isLarge () (Bool)
+    doors Num
+    wheels Num
+}
+
+# TODO creation + copy?
+# func (Vehicle) new (doors Num, wheels Num) (Vehicle) {
+#     return Vehicle{
+#         doors: doors,
+#         wheels: wheels,
+#     }
+# }
+
+func (v Vehicle) isLarge () (Bool) {
+    return? v.doors.greater(4) true
+    return? v.wheels.greater(4) true
+    return false
+}
+
+func (v Vehicle) equals <T Vehicle> (other T) (Bool) {
+    return? v.doors.equals(other.doors()).invert() false
+    return? v.wheels.equals(other.wheels()).invert() false
+    return true
 }
 
 func sumList (nums List<Num>) (T) {
@@ -30,15 +62,15 @@ func sumList (nums List<Num>) (T) {
 
 func relativeCounter <T Comparable> (items List<T>, item T) (Num) {
     return? items.empty() 0
-    remaining := relativeCounter<T>(items.tail(), item)
+    remaining = relativeCounter<T>(items.tail(), item)
     return? item.equals(items.head()) remaining.add(1)
     return remaining
 }
 
-export func adder (n Num) (Num) {
+share func adder (n Num) (Num) {
     return relativeSumList([0..n])
 }
 
-export func counter (s String, item Char) (Num) {
+share func counter (s String, item Char) (Num) {
     return relativeCounter<Char>(s, item)
 }
