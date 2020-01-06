@@ -45,14 +45,22 @@ share type Vehicle {
 # }
 
 func (v Vehicle) isLarge () (Bool) {
-    return? v.doors.greater(4) true
-    return? v.wheels.greater(4) true
+    if v.doors.greater(4) {
+        return true
+    }
+    if v.wheels.greater(4) {
+        return true
+    }
     return false
 }
 
-func (v Vehicle) equals <T Vehicle> (other T) (Bool) {
-    return? v.doors.equals(other.doors()).invert() false
-    return? v.wheels.equals(other.wheels()).invert() false
+func (a Vehicle) equals <T Vehicle> (b T) (Bool) {
+    if a.doors.equals(b.doors()).invert() {
+        return false
+    }
+    if a.wheels.equals(b.wheels()).invert() {
+        return false
+    }
     return true
 }
 
@@ -61,10 +69,16 @@ func sumList (nums List<Num>) (T) {
 }
 
 func relativeCounter <T Comparable> (items List<T>, item T) (Num) {
-    return? items.empty() 0
+    if items.empty() {
+        return 0
+    }
     remaining = relativeCounter<T>(items.tail(), item)
-    if exists items.head() as head {
-        return? item.equals(head) remaining.add(1)
+    head = items.head()
+    check head {
+        return remaining
+    }
+    if item.equals(head) {
+        return remaining.add(1)
     }
     return remaining
 }
