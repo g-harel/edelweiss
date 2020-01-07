@@ -1,24 +1,25 @@
 share type Bool {
     Comparable<Self>
-    share invert () (Bool)
+    share invert func () (Bool)
 }
 
 share type Comparable <T> {
-    share equals (T) (Bool)
+    share equals func (T) (Bool)
 }
 
 share type List <T> {
     Comparable<Self>
-    share empty () (Bool)
-    share head () (T?)
-    share tail () (Self)
-    share reduce <T> (acc T, func (T, T) (T)) (T)
+    share empty func () (Bool)
+    share head func () (T?)
+    share tail func () (Self)
+    share reduce func <T> (acc T, func (T, T) (T)) (T)
 }
 
 share type Num {
     Comparable<Self>
-    share add (Self) (Self)
-    share greater (Self) (Bool)
+    share add func (Self) (Self)
+    share greater func (Self) (Bool)
+    share smaller func (Self) (Bool)
 }
 
 share type Char {
@@ -29,11 +30,19 @@ share type String {
     List<Char>
 }
 
+share type Error {
+    share .new func (message String) (Self)
+    share .isOutOfBounds Self
+    share wrap func (message String) (Self)
+    share wraps func (err Error) (Bool)
+    share message String
+}
+
 share type Vehicle {
-    share .newCar () (Self)
-    share .newTruck () (Self)
+    share .newCar func () (Self)
+    share .newTruck func () (Self?)
     Comparable<Self>
-    share isLarge () (Bool)
+    share isLarge func () (Bool)
     doors Num
     wheels Num
 }
@@ -45,7 +54,10 @@ func (Vehicle) newCar () (Vehicle) {
     )
 }
 
-func (Vehicle) newTruck (doors Num) (Vehicle) {
+func (Vehicle) newTruck (doors Num) (Vehicle?) {
+    if doors.smaller(0) {
+        return Error.isOutOfBounds.wrap("door count is negative")
+    }
     return Vehicle(
         doors = doors,
         wheels = 18,
