@@ -30,19 +30,27 @@ share type String {
 }
 
 share type Vehicle {
+    share .newCar () (Self)
+    share .newTruck () (Self)
     Comparable<Self>
     share isLarge () (Bool)
     doors Num
     wheels Num
 }
 
-# TODO creation + copy?
-# func (Vehicle) new (doors Num, wheels Num) (Vehicle) {
-#     return Vehicle{
-#         doors: doors,
-#         wheels: wheels,
-#     }
-# }
+func (Vehicle) newCar () (Vehicle) {
+    return Vehicle(
+        doors = 4,
+        wheels = 4,
+    )
+}
+
+func (Vehicle) newTruck (doors Num) (Vehicle) {
+    return Vehicle(
+        doors = doors,
+        wheels = 18,
+    )
+}
 
 func (v Vehicle) isLarge () (Bool) {
     if v.doors.greater(4) {
