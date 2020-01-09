@@ -1,49 +1,61 @@
-share type Bool {
-    Comparable<Self>
-    share invert func () (Bool)
-    share and func (bool Bool) (Bool)
-    share or func (bool Bool) (Bool)
+@share
+@implements Comparable<Self>
+type Bool {
+    @share equals func (target T) (Bool)
+    @share invert func () (Bool)
+    @share and func (bool Bool) (Bool)
+    @share or func (bool Bool) (Bool)
 }
 
-share type Comparable <T> {
-    share equals func (target T) (Bool)
+@share
+type Comparable <T> {
+    @share equals func (target T) (Bool)
 }
 
-share type List <T> {
-    Comparable<Self>
-    share empty func () (Bool)
-    share head func () (T?)
-    share tail func () (Self)
-    share reduce func <S> (initial S, func (acc S, item T) (S)) (S)
-    share append func (item T) (Self)
-    share concat func (items Self) (Self)
+@share
+@implements Comparable<Self>
+type List <T> {
+    @share equals func (target T) (Bool)
+    @share empty func () (Bool)
+    @share head func () (T?)
+    @share tail func () (Self)
+    @share reduce func <S> (initial S, func (acc S, item T) (S)) (S)
+    @share append func (item T) (Self)
+    @share concat func (items Self) (Self)
 }
 
-share type Num {
-    share .random () (Self)
-    Comparable<Self>
-    share add func (num Self) (Self)
-    share mul func (num Self) (Self)
-    share greater func (num Self) (Bool)
-    share smaller func (num Self) (Bool)
+@share
+@implements Comparable<Self>
+type Num {
+    @share @static random func () (Self)
+    @share equals func (target T) (Bool)
+    @share add func (num Self) (Self)
+    @share mul func (num Self) (Self)
+    @share pow func (num Self) (Self)
+    @share greater func (num Self) (Bool)
+    @share smaller func (num Self) (Bool)
 }
 
-share type Char {
-    Comparable<Self>
+@share
+@implements Comparable<Self>
+type Char {
+    @share equals func (target T) (Bool)
 }
 
-share type String {
+@share
+type String {
     List<Char>
 }
 
-share type Error {
-    share .new func (message String) (Self)
-    share .newCoded func (code Num, message String) (Self)
-    share .isOutOfBounds Self
-    share .isMissing Self
-    share wrap func (err Error) (Self)
-    share wraps func (err Error) (Bool)
-    share message String
+@share
+type Error {
+    @share @static new func (message String) (Self)
+    @share @static newCoded func (code Num, message String) (Self)
+    @share @static isOutOfBounds Self
+    @share @static isMissing Self
+    @share wrap func (err Error) (Self)
+    @share wraps func (err Error) (Bool)
+    @share message String
     code Num?
     internal Bool
     history List<Error>
@@ -114,11 +126,13 @@ func (e Error) wraps (query Error) (Bool) {
     })
 }
 
-share type Vehicle {
-    share .newCar func () (Self)
-    share .newTruck func () (Self?)
-    Comparable<Self>
-    share isLarge func () (Bool)
+@share
+@implements Comparable<Self>
+type Vehicle {
+    @share @static newCar func () (Self)
+    @share @static newTruck func () (Self?)
+    @share equals func (target T) (Bool)
+    @share isLarge func () (Bool)
     doors Num
     wheels Num
 }
@@ -175,10 +189,12 @@ func relativeCounter <T Comparable> (items List<T>, item T) (Num) {
     return remaining
 }
 
-share func adder (n Num) (Num) {
+@share
+func adder (n Num) (Num) {
     return [0..n].reduce<Num>(0, func (a Num, b Num) a.add(b))
 }
 
-share func counter (s String, item Char) (Num) {
+@share
+func counter (s String, item Char) (Num) {
     return relativeCounter<Char>(s, item)
 }
