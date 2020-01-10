@@ -1,11 +1,5 @@
-@share
-@implements Comparable<Self>
-type Bool {
-    @share equals func (target T) (Bool)
-    @share invert func () (Bool)
-    @share and func (bool Bool) (Bool)
-    @share or func (bool Bool) (Bool)
-}
+from "../test" {ExampleType, helper as testHelper}
+from "~/core" {Type as CoreType}
 
 @share
 type Comparable <T> {
@@ -14,8 +8,15 @@ type Comparable <T> {
 
 @share
 @implements Comparable<Self>
+type Bool {
+    @share equals func (target Self) (Bool)
+    @share invert func () (Bool)
+    @share and func (bool Bool) (Bool)
+    @share or func (bool Bool) (Bool)
+}
+
+@share
 type List <T> {
-    @share equals func (target T) (Bool)
     @share empty func () (Bool)
     @share head func () (T?)
     @share tail func () (Self)
@@ -27,8 +28,8 @@ type List <T> {
 @share
 @implements Comparable<Self>
 type Num {
-    @share @static random func () (Self)
-    @share equals func (target T) (Bool)
+    @share @central random func () (Self)
+    @share equals func (target Self) (Bool)
     @share add func (num Self) (Self)
     @share mul func (num Self) (Self)
     @share pow func (num Self) (Self)
@@ -39,20 +40,28 @@ type Num {
 @share
 @implements Comparable<Self>
 type Char {
-    @share equals func (target T) (Bool)
+    @share equals func (target Self) (Bool)
 }
 
 @share
+@implements Comparable<Self>
+@implements List<Char>
 type String {
-    List<Char>
+    @share equals func (target Self) (Bool)
+    @share empty func () (Bool)
+    @share head func () (T?)
+    @share tail func () (Self)
+    @share reduce func <S> (initial S, func (acc S, item T) (S)) (S)
+    @share append func (item T) (Self)
+    @share concat func (items Self) (Self)
 }
 
 @share
 type Error {
-    @share @static new func (message String) (Self)
-    @share @static newCoded func (code Num, message String) (Self)
-    @share @static isOutOfBounds Self
-    @share @static isMissing Self
+    @share @central new func (message String) (Self)
+    @share @central newCoded func (code Num, message String) (Self)
+    @share @central isOutOfBounds Self
+    @share @central isMissing Self
     @share wrap func (err Error) (Self)
     @share wraps func (err Error) (Bool)
     @share message String
@@ -104,19 +113,17 @@ func (e Error) wrap (err Error) (Error) {
 }
 
 func (e Error) wraps (query Error) (Bool) {
-    queryCode = query.code
-    handle queryCode {
+    handle query.code {
         return false
     }
     return e.history.reduce<Bool>(false, func (acc Bool, err Error) (Bool) {
         if acc {
             return acc
         }
-        errCode = err.code
-        handle errCode {
+        handle err.code {
             return false
         }
-        if queryCode.equals(errCode).invert() {
+        if query.code.equals(err.code).invert() {
             return false
         }
         if query.internal.equals(err.internal).invert() {
@@ -129,9 +136,9 @@ func (e Error) wraps (query Error) (Bool) {
 @share
 @implements Comparable<Self>
 type Vehicle {
-    @share @static newCar func () (Self)
-    @share @static newTruck func () (Self?)
-    @share equals func (target T) (Bool)
+    @share @central newCar func () (Self)
+    @share @central newTruck func () (Self?)
+    @share equals func (target Self) (Bool)
     @share isLarge func () (Bool)
     doors Num
     wheels Num
@@ -164,7 +171,7 @@ func (v Vehicle) isLarge () (Bool) {
     return false
 }
 
-func (a Vehicle) equals <T Vehicle> (b T) (Bool) {
+func (a Vehicle) equals (b Vehicle) (Bool) {
     if a.doors.equals(b.doors()).invert() {
         return false
     }

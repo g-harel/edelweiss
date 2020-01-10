@@ -9,11 +9,10 @@ CHECKLIST
     - auto formatting
     - unit test lib
 - project structure
-    - single file project
+    - can be single file project
     - package manager
     - export privacy
     - namespaced standard lib
-    - modules can implement interface
     - interfaces everywhere
 - syntax
     - immutable data structures
