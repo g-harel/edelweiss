@@ -9,7 +9,6 @@ type Comparable <T> {
 @share
 @implements Comparable<Self>
 type Bool {
-    @share equals func (target Self) (Bool)
     @share invert func () (Bool)
     @share and func (bool Bool) (Bool)
     @share or func (bool Bool) (Bool)
@@ -29,7 +28,6 @@ type List <T> {
 @implements Comparable<Self>
 type Num {
     @share @central random func () (Self)
-    @share equals func (target Self) (Bool)
     @share add func (num Self) (Self)
     @share mul func (num Self) (Self)
     @share pow func (num Self) (Self)
@@ -39,22 +37,12 @@ type Num {
 
 @share
 @implements Comparable<Self>
-type Char {
-    @share equals func (target Self) (Bool)
-}
+type Char {}
 
 @share
 @implements Comparable<Self>
 @implements List<Char>
-type String {
-    @share equals func (target Self) (Bool)
-    @share empty func () (Bool)
-    @share head func () (T?)
-    @share tail func () (Self)
-    @share reduce func <S> (initial S, func (acc S, item T) (S)) (S)
-    @share append func (item T) (Self)
-    @share concat func (items Self) (Self)
-}
+type String {}
 
 @share
 type Error {
@@ -138,7 +126,6 @@ func (e Error) wraps (query Error) (Bool) {
 type Vehicle {
     @share @central newCar func () (Self)
     @share @central newTruck func () (Self?)
-    @share equals func (target Self) (Bool)
     @share isLarge func () (Bool)
     doors Num
     wheels Num
