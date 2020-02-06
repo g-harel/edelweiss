@@ -7,7 +7,7 @@ type Comparable <T> {
 }
 
 @share
-@implements Comparable<Self>
+@include Comparable<Self>
 type Bool {
     @share invert func () (Bool)
     @share and func (bool Bool) (Bool)
@@ -25,7 +25,7 @@ type List <T> {
 }
 
 @share
-@implements Comparable<Self>
+@include Comparable<Self>
 type Num {
     @share @central random func () (Self)
     @share add func (num Self) (Self)
@@ -36,12 +36,12 @@ type Num {
 }
 
 @share
-@implements Comparable<Self>
+@include Comparable<Self>
 type Char {}
 
 @share
-@implements Comparable<Self>
-@implements List<Char>
+@include Comparable<Self>
+@include List<Char>
 type String {}
 
 @share
@@ -122,7 +122,7 @@ func (e Error) wraps (query Error) (Bool) {
 }
 
 @share
-@implements Comparable<Self>
+@include Comparable<Self>
 type Vehicle {
     @share @central newCar func () (Self)
     @share @central newTruck func () (Self?)
