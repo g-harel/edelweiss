@@ -2,12 +2,22 @@ from "../test" {ExampleType, helper as testHelper}
 from "~/core" {Type as CoreType}
 
 @share
-type Comparable <T> {
-    @share equals func (target T) (Bool)
+template *Comparable <T> {
+    equals func (target T) (Bool)
 }
 
 @share
-@include Comparable<Self>
+template *List <T> {
+    empty func () (Bool)
+    head func () (T?)
+    tail func () (Self)
+    reduce func <S> (initial S, func (acc S, item T) (S)) (S)
+    append func (item T) (Self)
+    concat func (items Self) (Self)
+}
+
+@share
+@include *Comparable<Self>
 type Bool {
     @share invert func () (Bool)
     @share and func (bool Bool) (Bool)
@@ -15,17 +25,7 @@ type Bool {
 }
 
 @share
-type List <T> {
-    @share empty func () (Bool)
-    @share head func () (T?)
-    @share tail func () (Self)
-    @share reduce func <S> (initial S, func (acc S, item T) (S)) (S)
-    @share append func (item T) (Self)
-    @share concat func (items Self) (Self)
-}
-
-@share
-@include Comparable<Self>
+@include *Comparable<Self>
 type Num {
     @share @central random func () (Self)
     @share add func (num Self) (Self)
@@ -36,12 +36,12 @@ type Num {
 }
 
 @share
-@include Comparable<Self>
+@include *Comparable<Self>
 type Char {}
 
 @share
-@include Comparable<Self>
-@include List<Char>
+@include *Comparable<Self>
+@include *List<Char>
 type String {}
 
 @share
@@ -122,7 +122,7 @@ func (e Error) wraps (query Error) (Bool) {
 }
 
 @share
-@include Comparable<Self>
+@include *Comparable<Self>
 type Vehicle {
     @share @central newCar func () (Self)
     @share @central newTruck func () (Self?)
