@@ -2,12 +2,12 @@ from "../test" {ExampleType, helper as testHelper}
 from "~/core" {Type as CoreType}
 
 @share
-template *Comparable <T> {
+contract *Comparable <T> {
     equals func (target T) (Bool)
 }
 
 @share
-template *List <T> {
+contract *List <T> {
     empty func () (Bool)
     head func () (T?)
     tail func () (Self)
@@ -17,61 +17,57 @@ template *List <T> {
 }
 
 @share
-@include *Comparable<Self>
-type Bool {
-    @share invert func () (Bool)
-    @share and func (bool Bool) (Bool)
-    @share or func (bool Bool) (Bool)
-}
+@respect *Comparable<Self>
+type Bool {}
 
 @share
-@include *Comparable<Self>
-type Num {
-    @share @central random func () (Self)
-    @share add func (num Self) (Self)
-    @share mul func (num Self) (Self)
-    @share pow func (num Self) (Self)
-    @share greater func (num Self) (Bool)
-    @share smaller func (num Self) (Bool)
-}
+func (b Bool) invert () (Bool) {}
 
 @share
-@include *Comparable<Self>
+func (b Bool) and (bool Bool) (Bool) {}
+
+@share
+func (b Bool) or (bool Bool) (Bool) {}
+
+@share
+@respect *Comparable<Self>
+type Num {}
+
+@share
+func (Num) random () (Num) {}
+
+@share
+func (n Num) add (num Num) (Num) {}
+
+@share
+func (n Num) mul (num Num) (Num) {}
+
+@share
+func (n Num) pow (num Num) (Num) {}
+
+@share
+func (n Num) greater (num Num) (Bool) {}
+
+@share
+func (n Num) smaller (num Num) (Bool) {}
+
+@share
+@respect *Comparable<Self>
 type Char {}
 
 @share
-@include *Comparable<Self>
-@include *List<Char>
+@respect *Comparable<Self>
+@respect *List<Char>
 type String {}
 
 @share
 type Error {
-    @share @central new func (message String) (Self)
-    @share @central newCoded func (code Num, message String) (Self)
-    @share @central isOutOfBounds Self
-    @share @central isMissing Self
-    @share wrap func (err Error) (Self)
-    @share wraps func (err Error) (Bool)
-    @share message String
     code Num?
     internal Bool
     history List<Error>
 }
 
-Error.isOutOfBounds = Error(
-    message = "out of bounds",
-    code = 0,
-    internal = true,
-    history = [],
-)
-
-Error.isMissing = Error(
-    message = "missing",
-    code = 1,
-    internal = true,
-    history = [],
-)
-
+@share
 func (Error) new (message String) (Error) {
     return Error(
         code = Error.isMissing,
@@ -81,6 +77,7 @@ func (Error) new (message String) (Error) {
     )
 }
 
+@share
 func (Error) newCoded (code Num, message String) (Error) {
     return Error(
         code = Num,
@@ -90,6 +87,33 @@ func (Error) newCoded (code Num, message String) (Error) {
     )
 }
 
+@share
+func (Error) getOutOfBounds() (Error) {
+    return Error(
+        message = "out of bounds",
+        code = 0,
+        internal = true,
+        history = [],
+    )
+}
+
+@share
+func (Error) getMissing() (Error) {
+    return Error(
+        message = "missing",
+        code = 1,
+        internal = true,
+        history = [],
+    )
+}
+
+@share
+func (e Error) message () (String) {
+    # TODO Concat errors?
+    return e.message
+}
+
+@share
 func (e Error) wrap (err Error) (Error) {
     history = e.history.append(err).concat(err.history)
     return Error(
@@ -100,6 +124,7 @@ func (e Error) wrap (err Error) (Error) {
     )
 }
 
+@share
 func (e Error) wraps (query Error) (Bool) {
     handle query.code {
         return false
@@ -122,15 +147,13 @@ func (e Error) wraps (query Error) (Bool) {
 }
 
 @share
-@include *Comparable<Self>
+@respect *Comparable<Self>
 type Vehicle {
-    @share @central newCar func () (Self)
-    @share @central newTruck func () (Self?)
-    @share isLarge func () (Bool)
     doors Num
     wheels Num
 }
 
+@share
 func (Vehicle) newCar () (Vehicle) {
     return Vehicle(
         doors = 4,
@@ -138,6 +161,7 @@ func (Vehicle) newCar () (Vehicle) {
     )
 }
 
+@share
 func (Vehicle) newTruck (doors Num) (Vehicle?) {
     if doors.smaller(0) {
         return Error.isOutOfBounds.wrap("door count is negative")
@@ -148,6 +172,7 @@ func (Vehicle) newTruck (doors Num) (Vehicle?) {
     )
 }
 
+@share
 func (v Vehicle) isLarge () (Bool) {
     if v.doors.greater(4) {
         return true
@@ -158,6 +183,7 @@ func (v Vehicle) isLarge () (Bool) {
     return false
 }
 
+@share
 func (a Vehicle) equals (b Vehicle) (Bool) {
     if a.doors.equals(b.doors()).invert() {
         return false
